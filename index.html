@@ -699,6 +699,22 @@ img.av{object-fit:cover;padding:0}
 .cm{padding:14px;display:grid;gap:8px;border-left:4px solid var(--brand)}
 .cm.lido{border-left-color:var(--line);opacity:.85}
 .cm p{margin:0;white-space:pre-wrap}
+
+/* ===== Lote 3: documentos, listas, fornecedores, ferramentas ===== */
+.fer-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fer-g button{display:grid;gap:2px;justify-items:start;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;cursor:pointer;min-height:64px}
+.fer-g button b{font-size:.92rem}.fer-g button small{color:var(--muted);font-size:.78rem}
+.fer-g button .ic{color:var(--brand)}
+.lt-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:55vh;background:var(--surface)}
+.lt-wrap table{min-width:100%;font-size:.86rem}
+.lt-wrap th{position:sticky;top:0;background:var(--sunk);text-align:left;padding:8px 10px;white-space:nowrap}
+.lt-wrap td{padding:8px 10px;border-top:1px solid var(--line);white-space:nowrap}
+.lt-wrap tr[data-act]{cursor:pointer}
+.lt-wrap tr[data-act]:hover td{background:var(--sunk)}
+.doc-th{width:44px;height:44px;border-radius:8px;object-fit:cover;background:var(--sunk);flex:none;display:grid;place-items:center;font-size:.7rem;font-weight:800;color:var(--muted)}
+.filtros{display:flex;gap:6px;flex-wrap:wrap}
+.filtros button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;min-height:32px}
+.filtros button.on{border-color:var(--brand);background:var(--brand-soft);color:var(--fg)}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -2708,8 +2724,8 @@ function gCompraForm(pre){const g=G_(),c=Object.assign({item:'',setor:(g.setores
   abrirSheet(`${head('Nova compra')}<div class="g-form"><div class="field"><label for="cI">O que comprar</label><input id="cI" value="${esc(c.item)}" placeholder="Ex.: Arroz tipo 1"></div>
     <div class="g-row3"><div class="field"><label for="cS">Setor</label><select id="cS">${setOpts(c.setor)}</select></div><div class="field"><label for="cQ">Quantidade</label><input id="cQ" value="${esc(c.qtd)}" inputmode="decimal"></div><div class="field"><label for="cU">Unidade</label><input id="cU" value="${esc(c.un)}" placeholder="kg, un"></div></div>
     <span class="lbl">Cotações (até 3) — o app escolhe a mais barata</span>
-    ${[0,1,2].map(i=>`<div class="g-row"><div class="field"><input id="cF${i}" placeholder="Fornecedor ${i+1}" aria-label="Fornecedor ${i+1}"></div><div class="field"><input id="cV${i}" type="number" inputmode="decimal" step="0.01" placeholder="R$ total" aria-label="Valor ${i+1}"></div><span></span></div>`).join('')}
-    <div class="field"><label for="cP">Previsão de entrega</label><input id="cP" type="date"></div><span class="err" id="cErr" hidden></span>
+    ${[0,1,2].map(i=>`<div class="g-row"><div class="field"><input id="cF${i}" list="fornList" placeholder="Fornecedor ${i+1}" aria-label="Fornecedor ${i+1}"></div><div class="field"><input id="cV${i}" type="number" inputmode="decimal" step="0.01" placeholder="R$ total" aria-label="Valor ${i+1}"></div><span></span></div>`).join('')}
+    <datalist id="fornList">${(G_().forn||[]).map(f=>`<option value="${esc(f.nome)}">`).join('')}</datalist><div class="field"><label for="cP">Previsão de entrega</label><input id="cP" type="date"></div><span class="err" id="cErr" hidden></span>
     <button class="btn wide" data-act="gCompraSalvar">${ic('check')}Salvar (vai para aprovação)</button></div>`,'Nova compra')}
 function gRedes(){const y=window.scrollY;render();window.scrollTo(0,y)}
 Object.assign(actions,{
@@ -3018,6 +3034,98 @@ function demoExtra3(){if(!db.config.demo1||db.config.demo3)return false;const g=
   cm('Reunião geral na sexta às 16h','Pauta: avaliação do trimestre e escala de férias. Presença de toda a equipe.','todos',5,[]);
   db.config.demo3=now;return true}
 try{if(demoExtra3())save()}catch(e){console.warn('demo3',e)}
+
+/* ===== LOTE 3: Documentos, Listas próprias, Fornecedores + caixa Ferramentas ===== */
+GCAT.documentos=['Documentos','file'];GCAT.listas=['Minhas listas','list'];GCAT.fornecedores=['Fornecedores','users'];GCAT.ferramentas=['Ferramentas','sliders'];
+if(!GPAD.includes('ferramentas'))GPAD.splice(GPAD.indexOf('portaria'),0,'ferramentas');
+const _gPatch3=gPatch;gPatch=function(){const g=_gPatch3();g.docs=g.docs||[];g.listas=g.listas||[];g.forn=g.forn||[];
+  if((g.cardsV||1)<4){const ip=g.cards.findIndex(c=>c.tipo==='portaria');if(!g.cards.some(c=>c.tipo==='ferramentas'))g.cards.splice(ip<0?g.cards.length:ip,0,{id:uid(),tipo:'ferramentas',titulo:GCAT.ferramentas[0]});g.cardsV=4}return g};
+/* ferramentas: atalhos (o lote 4 acrescenta mais) */
+const FERR=[['documentos','file','Documentos',g=>g.docs.length+' guardados'],['listas','list','Minhas listas',g=>g.listas.length+' listas'],['fornecedores','users','Fornecedores',g=>g.forn.length+' cadastrados']];
+const DOC_CAT=['Nota fiscal','Contrato','Laudo ou certificado','Foto','Orçamento','Outro'];
+const docLig=d=>{if(!d.lig)return '';const [t,id]=d.lig.split(':'),g=G_();const o=t==='compra'?g.compras.find(x=>x.id===id):t==='venc'?g.venc.find(x=>x.id===id):t==='prob'?g.chamados.find(x=>x.id===id):null;return o?({compra:'Compra',venc:'Vencimento',prob:'Problema'}[t])+': '+(o.item||o.nome||o.titulo):''};
+const _gCardBody3=gCardBody;gCardBody=function(c){const g=G_();
+  if(c.tipo==='ferramentas')return `<div class="fer-g">${FERR.map(([t,icn,nome,sub])=>`<button data-act="gAbrirTipo" data-id="${t}">${ic(icn)}<b>${nome}</b><small>${sub(g)}</small></button>`).join('')}</div>`;
+  if(c.tipo==='documentos'){const ls=g.docs.slice().sort((a,b)=>b.t-a.t);return `<div class="gc-big">${ls.length}</div><div class="gc-sub">documentos guardados</div><ul class="gc-l">${ls.slice(0,4).map(d=>`<li><span>${esc(d.nome)}</span><span>${esc(d.cat)}</span></li>`).join('')}</ul>`}
+  if(c.tipo==='listas')return `<ul class="gc-l">${g.listas.map(l=>`<li><span>${esc(l.nome)}</span><span>${l.linhas.length} linhas</span></li>`).join('')||'<li><span>Crie listas do seu jeito (substitui a planilha).</span></li>'}</ul>`;
+  if(c.tipo==='fornecedores')return `<div class="gc-big">${g.forn.length}</div><div class="gc-sub">fornecedores cadastrados</div>`;
+  return _gCardBody3(c)};
+/* ---- documentos ---- */
+function abrirDocs(){const g=G_(),f=ui.docF||'',q=norm(ui.docQ||'');let ls=g.docs.slice().sort((a,b)=>b.t-a.t);if(f)ls=ls.filter(d=>d.cat===f);if(q)ls=ls.filter(d=>norm(d.nome+' '+d.cat+' '+docLig(d)).includes(q));
+  const ligOps=[['','Nenhum']].concat(g.compras.map(c=>['compra:'+c.id,'Compra: '+c.item]),g.venc.map(v=>['venc:'+v.id,'Vencimento: '+v.nome]),g.chamados.filter(x=>x.status!=='resolvido').map(x=>['prob:'+x.id,'Problema: '+x.titulo]));
+  abrirSheet(`${head('Documentos')}<p class="note">Notas fiscais, contratos, laudos, fotos… guardados e ligados à compra, ao vencimento ou ao problema.</p>
+    <div class="g-form"><div class="field"><label for="dcN">Nome</label><input id="dcN" placeholder="Ex.: NF do arroz – outubro"></div>
+    <div class="g-row3"><div class="field"><label for="dcC">Tipo</label><select id="dcC">${DOC_CAT.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label for="dcL">Ligar a</label><select id="dcL">${ligOps.map(([v,t])=>`<option value="${v}">${esc(t)}</option>`).join('')}</select></div><div class="field"><label for="dcF">Arquivo</label><input id="dcF" type="file" accept="image/*,application/pdf"></div></div>
+    <button class="btn" data-act="docSalvar">${ic('upload')}Guardar documento</button><p class="note">Fotos são reduzidas para ocupar pouco espaço. PDFs até 700 KB nesta demonstração.</p></div>
+    <div class="filtros">${['',...DOC_CAT].map(c=>`<button class="${f===c?'on':''}" data-act="docFiltro" data-id="${c}">${c||'Todos'}</button>`).join('')}</div>
+    <div class="list">${ls.map(d=>`<div class="g-it"><button class="t" style="display:flex;gap:10px;align-items:center;border:0;background:none;text-align:left;cursor:pointer;color:inherit;padding:0;min-width:0" data-act="docVer" data-id="${d.id}">${/^image/.test(d.mime)?`<img class="doc-th" src="${d.data}" alt="">`:`<span class="doc-th">${d.mime==='application/pdf'?'PDF':'DOC'}</span>`}<span style="display:grid;min-width:0"><b>${esc(d.nome)}</b><small>${esc(d.cat)} · ${dataBR(d.t)}${docLig(d)?' · '+esc(docLig(d)):''}</small></span></button><button class="icon-btn sm" data-act="docDel" data-id="${d.id}" aria-label="Apagar">${ui.docDel===d.id?'✓?':ic('trash')}</button></div>`).join('')||'<p class="empty">Nenhum documento.</p>'}</div>`,'Documentos')}
+function docAbrirBlob(d){try{const [h,b64]=d.data.split(',');const bin=atob(b64);const a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);const url=URL.createObjectURL(new Blob([a],{type:d.mime}));window.open(url,'_blank','noopener')}catch(e){toast('Não consegui abrir o arquivo.')}}
+/* ---- listas próprias ---- */
+function abrirListas(){const g=G_();abrirSheet(`${head('Minhas listas')}<p class="note">Crie listas com as colunas que quiser (patrimônio, empréstimos, uniformes…) e exporte para o Excel.</p>
+  <div class="g-form"><div class="field"><label for="lsN">Nova lista</label><input id="lsN" placeholder="Ex.: Empréstimo de equipamentos"></div><div class="field"><label for="lsC">Colunas (separadas por vírgula)</label><input id="lsC" placeholder="Ex.: Equipamento, Com quem, Data, Devolvido"></div><button class="btn" data-act="lsCriar">${ic('plus')}Criar lista</button></div>
+  <div class="list">${g.listas.map(l=>`<button class="g-it" style="width:100%;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;color:inherit;text-align:left" data-act="lsAbrir" data-id="${l.id}"><span class="t"><b>${esc(l.nome)}</b><small>${l.cols.map(esc).join(' · ')}</small></span><span class="g-tag">${l.linhas.length} linhas</span></button>`).join('')||'<p class="empty">Nenhuma lista.</p>'}</div>`,'Minhas listas')}
+function abrirLista(id){const l=G_().listas.find(x=>x.id===id);if(!l)return;const q=norm(ui.lsQ||'');const rows=q?l.linhas.filter(r=>norm(r.v.join(' ')).includes(q)):l.linhas;
+  abrirSheet(`${head(esc(l.nome))}<div class="rel-actions"><button class="btn ghost sm" data-act="lsVoltar">‹ Listas</button><button class="btn out sm" data-act="lsExport" data-id="${l.id}">${ic('copy')}Exportar Excel</button><button class="btn ghost sm" data-act="lsCols" data-id="${l.id}">Colunas</button><button class="btn ghost sm" data-act="lsDel" data-id="${l.id}">${ui.lsDel===l.id?'Toque de novo para apagar':'Apagar lista'}</button></div>
+    <div class="g-form">${l.cols.map((c,i)=>`<div class="field"><label for="lsV${i}">${esc(c)}</label><input id="lsV${i}"></div>`).join('')}<button class="btn" data-act="lsLinha" data-id="${l.id}">${ic('plus')}Adicionar linha</button></div>
+    ${l.linhas.length>6?`<input id="lsQ" type="search" class="notaq" placeholder="Procurar na lista" value="${esc(ui.lsQ||'')}" style="width:100%">`:''}
+    <div class="lt-wrap"><table><thead><tr>${l.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr data-act="lsEditar" data-id="${l.id}|${r.id}">${l.cols.map((c,i)=>`<td>${esc(r.v[i]||'')}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${l.cols.length}" class="note">Nenhuma linha ainda.</td></tr>`}</tbody></table></div><p class="note">Toque numa linha para editar ou apagar.</p>`,'Lista')}
+function csvBaixar(nome,cols,linhas){const e=v=>{v=String(v??'');return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v};const txt='﻿'+[cols.map(e).join(';')].concat(linhas.map(r=>r.map(e).join(';'))).join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));a.download=nome.replace(/[^\w\-À-ú ]+/g,'').trim().replace(/\s+/g,'-')+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('Planilha baixada. Abre no Excel e no Google Planilhas.')}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='lsQ'){ui.lsQ=e.target.value;const id=ui.lsAtual;const pos=e.target.selectionStart;abrirLista(id);const n=$('#lsQ');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}}});
+/* ---- fornecedores ---- */
+function fornHist(f){const out=[];G_().compras.forEach(c=>(c.cotacoes||[]).forEach((q,i)=>{if(norm(q.forn)===norm(f.nome))out.push({item:c.item,valor:q.valor,esc:i===c.esc,t:c.criado})}));return out.sort((a,b)=>b.t-a.t)}
+function abrirForn(){const g=G_(),q=norm(ui.fnQ||'');const ls=g.forn.filter(f=>!q||norm(f.nome+' '+f.cat).includes(q)).sort((a,b)=>norm(a.nome).localeCompare(norm(b.nome)));
+  abrirSheet(`${head('Fornecedores')}<button class="btn" data-act="fnForm" data-id="new">${ic('plus')}Novo fornecedor</button>
+    <div class="list">${ls.map(f=>{const h=fornHist(f),ga=h.filter(x=>x.esc).length;const tel=digits(f.tel);return `<div class="g-it" style="align-items:flex-start"><button class="t" style="border:0;background:none;text-align:left;cursor:pointer;color:inherit;padding:0" data-act="fnForm" data-id="${f.id}"><b>${esc(f.nome)}</b><small>${esc(f.cat||'')}${f.tel?' · '+esc(maskTel(f.tel)):''}${h.length?` · ${h.length} cotações, ganhou ${ga}`:''}${h[0]?` · última: ${esc(h[0].item)} ${brl(h[0].valor)}`:''}</small></button><span class="a" style="display:flex;gap:6px;flex:none">${tel?`<a class="btn sm wa" href="https://wa.me/55${tel}" target="_blank" rel="noopener">${ic('chat')}</a><a class="btn sm out" href="tel:${tel}">${ic('phone')}</a>`:''}</span></div>`}).join('')||'<p class="empty">Nenhum fornecedor.</p>'}</div>`,'Fornecedores')}
+function fnForm(id){const g=G_(),f=id==='new'?{nome:'',cat:'',tel:'',email:'',obs:''}:g.forn.find(x=>x.id===id);if(!f)return;const h=id==='new'?[]:fornHist(f);
+  abrirSheet(`${head(id==='new'?'Novo fornecedor':'Fornecedor')}<div class="g-form"><div class="field"><label for="fnN">Nome</label><input id="fnN" value="${esc(f.nome)}"></div>
+    <div class="g-row3"><div class="field"><label for="fnC">Categoria</label><input id="fnC" value="${esc(f.cat||'')}" placeholder="Ex.: Alimentos"></div><div class="field"><label for="fnT">Telefone / WhatsApp</label><input id="fnT" inputmode="tel" value="${esc(maskTel(f.tel||''))}"></div><div class="field"><label for="fnE">E-mail</label><input id="fnE" type="email" value="${esc(f.email||'')}"></div></div>
+    <div class="field"><label for="fnO">Observações</label><input id="fnO" value="${esc(f.obs||'')}" placeholder="Ex.: entrega às terças"></div>
+    <div class="rel-actions"><button class="btn" data-act="fnSalvar" data-id="${id}">${ic('check')}Salvar</button>${id!=='new'?`<button class="btn ghost" data-act="fnDel" data-id="${id}">${ui.fnDel===id?'Toque de novo para apagar':'Apagar'}</button>`:''}<button class="btn ghost" data-act="gAbrirTipo" data-id="fornecedores">‹ Voltar</button></div></div>
+    ${h.length?`<p class="eyebrow">Histórico de cotações</p><div class="list">${h.map(x=>`<div class="g-it"><span class="t"><b>${esc(x.item)}</b><small>${dataBR(x.t)}${x.esc?' · escolhida':''}</small></span><b>${brl(x.valor)}</b></div>`).join('')}</div>`:''}`,'Fornecedor')}
+const _gDetalhe3=gDetalhe;gDetalhe=function(tipo,cid){if(tipo==='documentos'){abrirDocs();return}if(tipo==='listas'){abrirListas();return}if(tipo==='fornecedores'){abrirForn();return}if(tipo==='ferramentas'){return}return _gDetalhe3(tipo,cid)};
+const _gCardHTML3=gCardHTML;gCardHTML=function(c,i,n){const h=_gCardHTML3(c,i,n);return c.tipo==='ferramentas'?h.replace(/<button class="btn ghost sm" data-act="gAbrir"[^>]*>Abrir<\/button>/,''):h};
+BUSCA_FONTES.push(q=>G_().docs.filter(d=>norm(d.nome+' '+d.cat).includes(q)).slice(0,6).map(d=>({t:d.nome,s:'Documento · '+d.cat,a:'docVer',id:d.id})),
+  q=>G_().forn.filter(f=>norm(f.nome+' '+(f.cat||'')).includes(q)).slice(0,6).map(f=>({t:f.nome,s:'Fornecedor · '+(f.cat||''),a:'fnForm',id:f.id})),
+  q=>{const out=[];G_().listas.forEach(l=>l.linhas.forEach(r=>{if(out.length<6&&norm(r.v.join(' ')).includes(q))out.push({t:r.v.filter(Boolean).join(' · '),s:'Lista · '+l.nome,a:'lsAbrir',id:l.id})}));return out});
+Object.assign(actions,{
+  docSalvar:()=>{const n=($('#dcN').value||'').trim(),f=$('#dcF').files&&$('#dcF').files[0];if(!f){toast('Escolha o arquivo.');return}const base={id:uid(),nome:n||f.name.replace(/\.[^.]+$/,''),cat:$('#dcC').value,lig:$('#dcL').value,t:Date.now(),por:quem()};
+    const fim=(data,mime)=>{G_().docs.push({...base,data,mime});save();abrirDocs();gRedes();toast('Documento guardado.')};
+    if(/^image\//.test(f.type))lerImagem(f,1400,d=>fim(d,d.slice(5,d.indexOf(';'))));else{if(f.size>700*1024){toast('PDF muito grande para a demonstração (máx. 700 KB).');return}const r=new FileReader();r.onload=()=>fim(r.result,f.type||'application/pdf');r.readAsDataURL(f)}},
+  docVer:id=>{const d=G_().docs.find(x=>x.id===id);if(d)docAbrirBlob(d)},
+  docFiltro:c=>{ui.docF=c;abrirDocs()},
+  docDel:id=>{if(ui.docDel!==id){ui.docDel=id;abrirDocs();return}const g=G_();g.docs=g.docs.filter(x=>x.id!==id);ui.docDel=null;save();abrirDocs();gRedes()},
+  lsCriar:()=>{const n=($('#lsN').value||'').trim(),cs=($('#lsC').value||'').split(',').map(x=>x.trim()).filter(Boolean);if(!n||!cs.length){toast('Dê um nome e pelo menos uma coluna.');return}const l={id:uid(),nome:n,cols:cs,linhas:[]};G_().listas.push(l);save();ui.lsAtual=l.id;abrirLista(l.id);gRedes()},
+  lsAbrir:id=>{ui.lsAtual=id;ui.lsQ='';ui.lsDel=null;abrirLista(id)},
+  lsVoltar:()=>abrirListas(),
+  lsLinha:id=>{const l=G_().listas.find(x=>x.id===id);if(!l)return;const v=l.cols.map((c,i)=>(($('#lsV'+i)||{}).value||'').trim());if(!v.some(Boolean)){toast('Preencha pelo menos um campo.');return}l.linhas.push({id:uid(),v});save();abrirLista(id);const f=$('#lsV0');f&&f.focus()},
+  lsEditar:k=>{const [lid,rid]=k.split('|'),l=G_().listas.find(x=>x.id===lid),r=l&&l.linhas.find(x=>x.id===rid);if(!r)return;
+    abrirSheet(`${head('Editar linha')}<div class="g-form">${l.cols.map((c,i)=>`<div class="field"><label for="leV${i}">${esc(c)}</label><input id="leV${i}" value="${esc(r.v[i]||'')}"></div>`).join('')}<div class="rel-actions"><button class="btn" data-act="lsEdSalvar" data-id="${k}">${ic('check')}Salvar</button><button class="btn ghost" data-act="lsEdDel" data-id="${k}">Apagar linha</button><button class="btn ghost" data-act="lsAbrir" data-id="${lid}">‹ Voltar</button></div></div>`,'Editar linha')},
+  lsEdSalvar:k=>{const [lid,rid]=k.split('|'),l=G_().listas.find(x=>x.id===lid),r=l&&l.linhas.find(x=>x.id===rid);if(!r)return;r.v=l.cols.map((c,i)=>(($('#leV'+i)||{}).value||'').trim());save();abrirLista(lid)},
+  lsEdDel:k=>{const [lid,rid]=k.split('|'),l=G_().listas.find(x=>x.id===lid);if(!l)return;l.linhas=l.linhas.filter(x=>x.id!==rid);save();abrirLista(lid);gRedes()},
+  lsCols:id=>{const l=G_().listas.find(x=>x.id===id);if(!l)return;abrirSheet(`${head('Colunas')}<p class="note">Renomeie, acrescente ou retire colunas (separadas por vírgula). Os dados seguem a ordem das colunas.</p><div class="field"><input id="lsCc" value="${esc(l.cols.join(', '))}"></div><div class="rel-actions"><button class="btn" data-act="lsColsSalvar" data-id="${id}">${ic('check')}Salvar</button><button class="btn ghost" data-act="lsAbrir" data-id="${id}">‹ Voltar</button></div>`,'Colunas')},
+  lsColsSalvar:id=>{const l=G_().listas.find(x=>x.id===id);if(!l)return;const cs=($('#lsCc').value||'').split(',').map(x=>x.trim()).filter(Boolean);if(!cs.length)return;l.cols=cs;l.linhas.forEach(r=>{r.v=cs.map((c,i)=>r.v[i]||'')});save();abrirLista(id)},
+  lsDel:id=>{if(ui.lsDel!==id){ui.lsDel=id;abrirLista(id);return}const g=G_();g.listas=g.listas.filter(x=>x.id!==id);ui.lsDel=null;save();abrirListas();gRedes()},
+  lsExport:id=>{const l=G_().listas.find(x=>x.id===id);if(l)csvBaixar(l.nome,l.cols,l.linhas.map(r=>r.v))},
+  fnForm:id=>{ui.fnDel=null;fnForm(id)},
+  fnSalvar:id=>{const n=($('#fnN').value||'').trim();if(!n){$('#fnN').focus();return}const d={nome:n,cat:$('#fnC').value.trim(),tel:digits($('#fnT').value),email:$('#fnE').value.trim(),obs:$('#fnO').value.trim()};const g=G_();if(id==='new')g.forn.push({id:uid(),...d});else Object.assign(g.forn.find(x=>x.id===id)||{},d);save();abrirForn();gRedes();toast('Fornecedor salvo.')},
+  fnDel:id=>{if(ui.fnDel!==id){ui.fnDel=id;fnForm(id);return}const g=G_();g.forn=g.forn.filter(x=>x.id!==id);ui.fnDel=null;save();abrirForn();gRedes()}
+});
+/* exemplos na escola simulada */
+function svgDoc(titulo,linhas,cor){const l=linhas.map((t,i)=>`<text x="40" y="${170+i*44}" font-size="26" fill="#333">${t}</text>`).join('');const s=`<svg xmlns="http://www.w3.org/2000/svg" width="800" height="560"><rect width="800" height="560" fill="#fff"/><rect width="800" height="90" fill="${cor}"/><text x="40" y="58" font-size="34" font-family="Arial" font-weight="bold" fill="#fff">${titulo}</text>${l}<text x="40" y="530" font-size="18" fill="#999">Documento de exemplo — demonstração</text></svg>`;return 'data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(s)))}
+function demoExtra4(){if(!db.config.demo1||db.config.demo4)return false;const g=G_(),now=Date.now(),D=864e5;
+  const F=[['Atacadão','Alimentos'],['Assaí','Alimentos'],['Mercado Bom Preço','Alimentos'],['Distribuidora Merenda Boa','Alimentos'],['Laticínios Vale','Alimentos'],['Ceasa SJC','Hortifrúti'],['Frigorífico Vale','Carnes'],['Gás Vale','Gás'],['Ultragaz','Gás'],['Limpa Tudo','Limpeza'],['Higiclean','Limpeza'],['Kalunga','Papelaria'],['Papelaria Central','Papelaria'],['Elétrica Paraíba','Manutenção elétrica'],['Leroy Merlin','Material de construção'],['Serralheria Silva','Serralheria']];
+  F.forEach(([nome,cat],i)=>{if(!g.forn.some(f=>norm(f.nome)===norm(nome)))g.forn.push({id:uid(),nome,cat,tel:'129000000'+String(i).padStart(2,'0'),email:'',obs:'Telefone fictício (demonstração)'})});
+  const cp=g.compras.find(c=>/arroz/i.test(c.item)),ve=g.venc.find(v=>/extintor/i.test(v.nome)),vl=g.venc.find(v=>/limpeza/i.test(v.nome)),va=g.venc.find(v=>/AVCB/i.test(v.nome));
+  const dc=(nome,cat,lig,svg,k)=>g.docs.push({id:uid(),nome,cat,lig,t:now-k*D,mime:'image/svg+xml',data:svg,por:'Sérgio Martins'});
+  dc('NF – Arroz tipo 1 (Assaí)','Nota fiscal',cp?'compra:'+cp.id:'',svgDoc('NOTA FISCAL – Assaí',['Arroz tipo 1 – 300 kg','Valor total: R$ 1.180,00','Emissão: '+dataBR(now-12*D)],'#1F5FAE'),12);
+  dc('Contrato – Empresa de limpeza','Contrato',vl?'venc:'+vl.id:'',svgDoc('CONTRATO DE PRESTAÇÃO',['Limpeza e conservação','Vigência: 12 meses','Valor mensal: R$ 18.400,00'],'#0E7A6A'),90);
+  dc('Laudo – Recarga dos extintores 2025','Laudo ou certificado',ve?'venc:'+ve.id:'',svgDoc('LAUDO TÉCNICO',['Recarga de 24 extintores','Validade: 12 meses','Responsável: Extintores Vale'],'#B4441B'),340);
+  dc('AVCB – Corpo de Bombeiros','Laudo ou certificado',va?'venc:'+va.id:'',svgDoc('AVCB',['Auto de Vistoria do Corpo de Bombeiros','Situação: regular'],'#6B3FA0'),200);
+  if(!g.listas.length){g.listas.push({id:uid(),nome:'Empréstimo de equipamentos',cols:['Equipamento','Com quem','Data','Devolvido'],linhas:[['Projetor Epson','Prof. Eduardo Lima',dataBR(now-D),'Não'],['Caixa de som','Prof.ª Marta Silva',dataBR(now-3*D),'Sim'],['Notebook da coordenação','Juliana Costa',dataBR(now-6*D),'Sim'],['Extensão elétrica 10 m','Carlos Mendes',dataBR(now),'Não']].map(v=>({id:uid(),v}))});
+    g.listas.push({id:uid(),nome:'Uniformes doados',cols:['Tamanho','Quantidade','Observação'],linhas:[['P','12',''],['M','18','4 com defeito na costura'],['G','9',''],['GG','3','']].map(v=>({id:uid(),v}))})}
+  db.config.demo4=now;return true}
+try{if(demoExtra4())save()}catch(e){console.warn('demo4',e)}
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
