@@ -2523,9 +2523,10 @@ function somSalvar(){try{localStorage.setItem('portaria-som',JSON.stringify(SOM.
 function somCtx(){try{if(!SOM.ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;SOM.ctx=new AC()}if(SOM.ctx.state==='suspended')SOM.ctx.resume();return SOM.ctx}catch(e){return null}}
 function somNota(f,ini,dur,vol,tipo){const c=somCtx();if(!c)return;const t=c.currentTime+ini,o=c.createOscillator(),g=c.createGain();o.type=tipo||'sine';o.frequency.setValueAtTime(f,t);
   g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.008);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+0.02)}
-function somClique(){if(SOM.cfg.clique)somNota(1500,0,0.045,0.05,'sine')}
+function somClique(){const n=Date.now();if(!SOM.cfg.clique||n-(SOM.tc||0)<120)return;SOM.tc=n;somNota(1500,0,0.045,0.05,'sine')}
 function somAviso(){if(!SOM.cfg.aviso)return;somNota(880,0,0.16,0.16,'triangle');somNota(1320,0.13,0.26,0.14,'triangle');try{if(navigator.vibrate)navigator.vibrate([60,40,60])}catch(e){}}
-document.addEventListener('pointerdown',e=>{if(ui.modo==='pais')return;const b=e.target.closest('button,a.btn,[data-act],label.check,.seg label');if(b&&!b.disabled)somClique()},true);
+/* só toca quando o toque vira um clique de verdade (rolar a tela não conta) */
+document.addEventListener('click',e=>{if(ui.modo==='pais')return;const b=e.target.closest('button,a.btn,[data-act],label.check,.seg label,input[type=checkbox],input[type=radio]');if(b&&!b.disabled)somClique()},true);
 function somCfgHTML(){return `<div class="field"><span class="lbl">Sons neste aparelho</span>
   <label class="check"><input type="checkbox" id="somClique"${SOM.cfg.clique?' checked':''} onchange="actions.somTg('clique',this)"><span>Som de clique nos botões</span></label>
   <label class="check"><input type="checkbox" id="somAviso"${SOM.cfg.aviso?' checked':''} onchange="actions.somTg('aviso',this)"><span>Som de notificação (mensagens do chat, avisos do setor, pedidos dos pais e hora da troca de plantão)</span></label>
