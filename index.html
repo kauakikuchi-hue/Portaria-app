@@ -715,6 +715,19 @@ img.av{object-fit:cover;padding:0}
 .filtros{display:flex;gap:6px;flex-wrap:wrap}
 .filtros button{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;padding:4px 12px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer;min-height:32px}
 .filtros button.on{border-color:var(--brand);background:var(--brand-soft);color:var(--fg)}
+
+/* ===== Lote 4: equipe, relatórios, patrimônio, indicadores ===== */
+.eq-grp{display:grid;gap:6px}
+.st-chip{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:700}
+.st-on{background:color-mix(in srgb,#16a34a 15%,var(--surface));color:#15803d}
+.st-off{background:var(--sunk);color:var(--muted)}
+.st-aus{background:color-mix(in srgb,#f59e0b 18%,var(--surface));color:#B45309}
+.ind{display:grid;gap:6px;padding:12px;border-bottom:1px solid var(--line)}
+.ind:last-child{border-bottom:0}
+.ind-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.ind-h b{min-width:0}
+.ind-v{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ind-v input{width:90px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit;background:var(--surface);color:var(--fg)}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -3126,6 +3139,140 @@ function demoExtra4(){if(!db.config.demo1||db.config.demo4)return false;const g=
     g.listas.push({id:uid(),nome:'Uniformes doados',cols:['Tamanho','Quantidade','Observação'],linhas:[['P','12',''],['M','18','4 com defeito na costura'],['G','9',''],['GG','3','']].map(v=>({id:uid(),v}))})}
   db.config.demo4=now;return true}
 try{if(demoExtra4())save()}catch(e){console.warn('demo4',e)}
+
+/* ===== LOTE 4: Equipe, Relatórios e exportação, Patrimônio, Indicadores da PPP ===== */
+GCAT.equipe=['Equipe','users'];GCAT.relatorios=['Relatórios','file'];GCAT.patrimonio=['Patrimônio','list'];GCAT.indicadores=['Indicadores da avaliação','chart'];
+if(!GPAD.includes('indicadores'))GPAD.splice(GPAD.indexOf('economia')+1,0,'indicadores');if(!GPAD.includes('equipe'))GPAD.splice(GPAD.indexOf('comunicados'),0,'equipe');
+FERR.push(['equipe','users','Equipe',g=>eqPessoas().length+' pessoas'],['relatorios','file','Relatórios',()=>'PDF e Excel'],['patrimonio','list','Patrimônio',g=>g.patrimonio.length+' bens'],['indicadores','chart','Indicadores',()=>indNota()+'% da meta']);
+const _gPatch4=gPatch;gPatch=function(){const g=_gPatch4();g.ausencias=g.ausencias||[];g.horarios=g.horarios||{};g.patrimonio=g.patrimonio||[];if(!Array.isArray(g.indicadores))g.indicadores=IND_PAD();
+  if((g.cardsV||1)<5){const ie=g.cards.findIndex(c=>c.tipo==='economia');if(!g.cards.some(c=>c.tipo==='indicadores'))g.cards.splice(ie<0?1:ie+1,0,{id:uid(),tipo:'indicadores',titulo:GCAT.indicadores[0]});
+    const ic_=g.cards.findIndex(c=>c.tipo==='comunicados');if(!g.cards.some(c=>c.tipo==='equipe'))g.cards.splice(ic_<0?g.cards.length:ic_,0,{id:uid(),tipo:'equipe',titulo:GCAT.equipe[0]});g.cardsV=5}return g};
+/* ---------- equipe ---------- */
+const AUS_T=['Folga','Férias','Falta','Falta justificada','Troca de plantão','Curso / treinamento'];
+const ausHoje=(u,iso)=>G_().ausencias.find(a=>a.uid===u.id&&a.ini<=(iso||hojeISO())&&(a.fim||a.ini)>=(iso||hojeISO()));
+function eqStatus(u){const a=ausHoje(u);if(a)return ['st-aus',a.tipo];if(u.perfil==='porteiro')return db.plantao&&db.plantao.resp===u.nome?['st-on','De plantão agora']:['st-off','Fora do plantão'];
+  const d=new Date(),wd=d.getDay(),h=d.getHours()+d.getMinutes()/60;return wd>0&&wd<6&&h>=7&&h<17?['st-on','Trabalhando']:['st-off','Fora do horário']}
+function abrirEquipeG(){const g=G_(),ps=eqPessoas(),grp={};ps.forEach(u=>{(grp[u.perfil]=grp[u.perfil]||[]).push(u)});const m=mesKey(Date.now());
+  const faltas=u=>g.ausencias.filter(a=>a.uid===u.id&&/^Falta/.test(a.tipo)&&mesKey(new Date(a.ini+'T12:00').getTime())===m).length;
+  const prox=g.ausencias.filter(a=>(a.fim||a.ini)>=hojeISO()).sort((a,b)=>a.ini.localeCompare(b.ini));
+  abrirSheet(`${head('Equipe')}<p class="note">Quem está trabalhando, escala, folgas, férias e faltas. Toque na pessoa para anotar o horário dela.</p>
+    ${['gestor','secretaria','porteiro','cozinha'].filter(k=>grp[k]).map(k=>`<div class="eq-grp"><p class="eyebrow">${PERFIL_NOME[k]}</p><div class="list">${grp[k].map(u=>{const [cl,tx]=eqStatus(u),f=faltas(u);return `<button class="g-it" style="width:100%;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;color:inherit;text-align:left" data-act="eqHor" data-id="${u.id}"><span style="display:flex;gap:10px;align-items:center;min-width:0">${avatar(u)}<span class="t"><b>${esc(u.nome)}</b><small>${esc(g.horarios[u.id]||'Horário não informado')}${f?' · '+f+(f===1?' falta':' faltas')+' no mês':''}</small></span></span><span class="st-chip ${cl}">${esc(tx)}</span></button>`}).join('')}</div></div>`).join('')}
+    <p class="eyebrow">Registrar folga, férias ou falta</p><div class="g-form"><div class="g-row3"><div class="field"><label for="auP">Pessoa</label><select id="auP">${ps.map(u=>`<option value="${u.id}">${esc(u.nome)}</option>`).join('')}</select></div><div class="field"><label for="auT">Tipo</label><select id="auT">${AUS_T.map(t=>`<option>${t}</option>`).join('')}</select></div><div class="field"><label for="auO">Observação</label><input id="auO"></div></div>
+    <div class="g-row3"><div class="field"><label for="auI">De</label><input id="auI" type="date" value="${hojeISO()}"></div><div class="field"><label for="auF">Até (opcional)</label><input id="auF" type="date"></div><div style="display:flex;align-items:end"><button class="btn wide" data-act="auAdd">${ic('plus')}Registrar</button></div></div></div>
+    <p class="eyebrow">Próximas e atuais</p><div class="list">${prox.map(a=>`<div class="g-it"><span class="t"><b>${esc(a.nome)} · ${esc(a.tipo)}</b><small>${dBR(a.ini)}${a.fim&&a.fim!==a.ini?' a '+dBR(a.fim):''}${a.obs?' · '+esc(a.obs):''}</small></span><button class="icon-btn sm" data-act="auDel" data-id="${a.id}" aria-label="Apagar">${ui.auDel===a.id?'✓?':ic('trash')}</button></div>`).join('')||'<p class="empty">Nenhuma.</p>'}</div>`,'Equipe')}
+/* ---------- patrimônio ---------- */
+const PAT_EST=['Bom','Regular','Ruim','Em conserto','Baixado'];
+function abrirPat(){const g=G_(),q=norm(ui.ptQ||''),fl=ui.ptL||'';const locais=[...new Set(g.patrimonio.map(x=>x.local).filter(Boolean))].sort();let ls=g.patrimonio.slice();if(fl)ls=ls.filter(x=>x.local===fl);if(q)ls=ls.filter(x=>norm(x.plaqueta+' '+x.nome+' '+x.local).includes(q));
+  const tot=ls.filter(x=>x.estado!=='Baixado').reduce((a,x)=>a+(+x.valor||0),0);
+  abrirSheet(`${head('Patrimônio')}<div class="rel-actions"><button class="btn" data-act="ptForm" data-id="new">${ic('plus')}Novo bem</button><button class="btn out" data-act="ptExport">${ic('copy')}Exportar Excel</button></div>
+    <input id="ptQ" type="search" class="notaq" style="width:100%" placeholder="Procurar por plaqueta, nome ou local" value="${esc(ui.ptQ||'')}">
+    <div class="filtros">${['',...locais].map(l=>`<button class="${fl===l?'on':''}" data-act="ptLocal" data-id="${esc(l)}">${esc(l||'Todos os locais')}</button>`).join('')}</div>
+    <p class="note">${ls.length} bens · valor total ${brl(tot)}</p>
+    <div class="list">${ls.map(x=>`<button class="g-it" style="width:100%;border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;color:inherit;text-align:left" data-act="ptForm" data-id="${x.id}"><span class="t"><b>${esc(x.nome)}</b><small>Plaqueta ${esc(x.plaqueta||'—')} · ${esc(x.local||'')}${x.valor?' · '+brl(x.valor):''}</small></span><span class="g-tag ${x.estado==='Bom'?'ok':x.estado==='Regular'?'':x.estado==='Baixado'?'':'ruim'}">${esc(x.estado)}</span></button>`).join('')||'<p class="empty">Nenhum bem.</p>'}</div>`,'Patrimônio')}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='ptQ'){ui.ptQ=e.target.value;const pos=e.target.selectionStart;abrirPat();const n=$('#ptQ');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(x){}}}});
+function ptForm(id){const g=G_(),x=id==='new'?{plaqueta:'',nome:'',local:'',estado:'Bom',valor:'',obs:''}:g.patrimonio.find(y=>y.id===id);if(!x)return;
+  abrirSheet(`${head(id==='new'?'Novo bem':'Bem do patrimônio')}<div class="g-form"><div class="g-row3"><div class="field"><label for="ptP">Plaqueta</label><input id="ptP" value="${esc(x.plaqueta||'')}"></div><div class="field"><label for="ptN">Nome</label><input id="ptN" value="${esc(x.nome)}"></div><div class="field"><label for="ptL">Local</label><input id="ptL" value="${esc(x.local||'')}" list="ptLocs"><datalist id="ptLocs">${[...new Set(g.patrimonio.map(y=>y.local).filter(Boolean))].map(l=>`<option value="${esc(l)}">`).join('')}</datalist></div></div>
+    <div class="g-row3"><div class="field"><label for="ptE">Estado</label><select id="ptE">${PAT_EST.map(e=>`<option${x.estado===e?' selected':''}>${e}</option>`).join('')}</select></div><div class="field"><label for="ptV">Valor (R$)</label><input id="ptV" type="number" inputmode="decimal" step="0.01" value="${x.valor||''}"></div><div class="field"><label for="ptO">Observação</label><input id="ptO" value="${esc(x.obs||'')}"></div></div>
+    <div class="rel-actions"><button class="btn" data-act="ptSalvar" data-id="${id}">${ic('check')}Salvar</button>${id!=='new'?`<button class="btn ghost" data-act="ptDel" data-id="${id}">${ui.ptDel===id?'Toque de novo para apagar':'Apagar'}</button>`:''}<button class="btn ghost" data-act="gAbrirTipo" data-id="patrimonio">‹ Voltar</button></div></div>`,'Patrimônio')}
+/* ---------- indicadores da avaliação (PPP) ---------- */
+function IND_PAD(){return [['Problemas resolvidos em até 3 dias','Disponibilidade','probPrazo',90,'%'],['Itens de estoque acima do mínimo','Técnico','estoqueOk',90,'%'],['Vencimentos em dia (laudos, contratos…)','Técnico','vencOk',100,'%'],['Passagens de posto registradas','Técnico','passagens',100,'%'],['Tarefas da equipe feitas no prazo','Técnico','tarefasPrazo',85,'%'],
+  ['Satisfação com a alimentação (pesquisa)','Satisfação','',8,'nota'],['Satisfação com a limpeza (pesquisa)','Satisfação','',8,'nota'],['Banheiros funcionando','Disponibilidade','',100,'%'],['Wi-Fi funcionando','Disponibilidade','',95,'%']].map(([nome,grupo,auto,meta,un])=>({id:uid(),nome,grupo,auto,meta,un,valor:''}))}
+function indAuto(k){const g=G_(),now=Date.now(),D=864e5,pc=(a,b)=>b?Math.round(a/b*100):null;
+  if(k==='probPrazo'){const r=g.chamados.filter(c=>c.status==='resolvido'&&c.fim&&c.t>now-90*D);return pc(r.filter(c=>c.fim-c.t<=3*D).length,r.length)}
+  if(k==='estoqueOk')return pc(g.estoque.filter(e=>(+e.qtd||0)>(+e.min||0)).length,g.estoque.length);
+  if(k==='vencOk')return pc(g.venc.filter(v=>diasAte(v.data)>=0).length,g.venc.length);
+  if(k==='passagens'){const ps=(db.plantoes||[]).filter(r=>r.fim>now-30*D);return pc(ps.filter(r=>r.assumo||Array.isArray(r.carga)).length,ps.length)}
+  if(k==='tarefasPrazo'){const t=g.tarefas.filter(x=>x.status==='feita'&&x.feitaEm>now-90*D);return pc(t.filter(x=>!x.prazo||isoDia(new Date(x.feitaEm))<=x.prazo).length,t.length)}
+  return null}
+const indValor=x=>x.auto?indAuto(x.auto):(x.valor===''||x.valor==null?null:+x.valor);
+const indPct=x=>{const v=indValor(x);return v==null||!(+x.meta)?null:Math.min(100,Math.round(v/x.meta*100))};
+function indNota(){const ps=G_().indicadores.map(indPct).filter(v=>v!=null);return ps.length?Math.round(ps.reduce((a,b)=>a+b,0)/ps.length):0}
+function abrirInd(){const g=G_(),grs=[...new Set(g.indicadores.map(x=>x.grupo))];
+  abrirSheet(`${head('Indicadores da avaliação')}<div class="alert">${ic('alert')}<div><strong>Nota estimada: ${indNota()}% das metas</strong><p>A avaliação trimestral da PPP usa 21 índices oficiais (Anexo E do contrato). Ajuste nomes, metas e grupos para ficar igual ao da SP+. Os marcados "app" são calculados sozinhos.</p></div></div>
+    ${grs.map(gr=>`<p class="eyebrow">${esc(gr)}</p><div class="list">${g.indicadores.filter(x=>x.grupo===gr).map(x=>{const v=indValor(x),p=indPct(x);return `<div class="ind"><div class="ind-h"><b>${esc(x.nome)}</b><span class="${p==null?'':p>=100?'':p>=80?'atn':'ruim'}" style="font-weight:800">${v==null?'—':v+(x.un==='%'?'%':'')}</span></div>${p!=null?`<div class="gbar${p<80?' ruim':''}"><i style="width:${p}%"></i></div>`:''}
+      <div class="ind-v">${x.auto?'<span class="g-tag ok">calculado pelo app</span>':`<label class="note">Valor <input type="number" step="0.1" inputmode="decimal" data-ind="${x.id}" data-k="valor" value="${x.valor??''}"></label>`}<label class="note">Meta <input type="number" step="0.1" inputmode="decimal" data-ind="${x.id}" data-k="meta" value="${x.meta}"></label><span class="note">${x.un==='%'?'%':'nota 0–10'}</span><button class="icon-btn sm" data-act="indDel" data-id="${x.id}" aria-label="Retirar">${ui.indDel===x.id?'✓?':ic('x')}</button></div></div>`}).join('')}</div>`).join('')}
+    <p class="eyebrow">Novo indicador</p><div class="g-form"><div class="field"><input id="inN" placeholder="Ex.: Jardins conservados"></div><div class="g-row3"><div class="field"><label for="inG">Grupo</label><input id="inG" value="Satisfação" list="inGs"><datalist id="inGs">${grs.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></div><div class="field"><label for="inU">Tipo</label><select id="inU"><option value="%">Percentual</option><option value="nota">Nota 0–10</option></select></div><div class="field"><label for="inM">Meta</label><input id="inM" type="number" value="90"></div></div><button class="btn" data-act="indAdd">${ic('plus')}Adicionar indicador</button></div>
+    <button class="btn ghost" data-act="indPadrao">${ui.indPadrao?'Toque de novo para restaurar':'Restaurar indicadores padrão'}</button>`,'Indicadores')}
+document.addEventListener('change',e=>{const el=e.target;if(!el||!el.dataset||!el.dataset.ind)return;const x=G_().indicadores.find(y=>y.id===el.dataset.ind);if(!x)return;x[el.dataset.k]=el.value===''?'':+el.value;save();const sc=($('.sheet-panel')||{}).scrollTop;abrirInd();const sp=$('.sheet-panel');if(sp&&sc!=null)sp.scrollTop=sc;gRedes()});
+/* ---------- relatórios e exportação ---------- */
+function relPer(){const k=ui.rgPerG||'mes',d=new Date();let a,b=Date.now()+1,nome;
+  if(k==='mes'){a=new Date(d.getFullYear(),d.getMonth(),1).getTime();nome=d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+  else if(k==='mesant'){a=new Date(d.getFullYear(),d.getMonth()-1,1).getTime();b=new Date(d.getFullYear(),d.getMonth(),1).getTime();nome=new Date(a).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
+  else if(k==='7d'){a=hoje0()-6*864e5;nome='últimos 7 dias'}else{const q=Math.floor(d.getMonth()/3);a=new Date(d.getFullYear(),q*3,1).getTime();nome=(q+1)+'º trimestre de '+d.getFullYear()}return {a,b,nome}}
+function relDados(){const {a,b,nome}=relPer(),g=G_(),em=t=>t>=a&&t<b;const gastos=g.gastos.filter(x=>em(x.t)),compras=g.compras.filter(x=>em(x.criado));
+  const porSetor=g.setores.map(s=>({nome:s.nome,verba:+s.valor||0,gasto:gastos.filter(x=>x.setor===s.nome).reduce((q,x)=>q+(+x.valor||0),0)}));
+  const probs=g.chamados.filter(x=>em(x.t)),res=probs.filter(x=>x.status==='resolvido'&&x.fim),tf=g.tarefas.filter(x=>x.status==='feita'&&em(x.feitaEm||0));
+  const vis=db.visitas.filter(v=>em(v.entrada)),oc=ocorrencias(a,b);
+  return {nome,a,b,gastos,compras,porSetor,totalGasto:gastos.reduce((q,x)=>q+(+x.valor||0),0),economia:compras.filter(c=>c.status!=='aprovar').reduce((q,c)=>q+econCompra(c),0),probs,res,medRes:res.length?res.reduce((q,x)=>q+(x.fim-x.t),0)/res.length:0,tf,tfPrazo:tf.filter(x=>!x.prazo||isoDia(new Date(x.feitaEm))<=x.prazo).length,vis,oc,aus:g.ausencias.filter(x=>{const t=new Date(x.ini+'T12:00').getTime();return em(t)}),crit:g.estoque.filter(estCritico),nota:indNota()}}
+function relTextoG(){const r=relDados(),L=[`*Relatório da gestão · ${db.config.escola}*`,`Período: ${r.nome}`,'',`💰 Gastos: ${brl(r.totalGasto)} · Economia nas compras: ${brl(r.economia)}`];
+  r.porSetor.forEach(s=>L.push(`• ${s.nome}: ${brl(s.gasto)}${s.verba?' de '+brl(s.verba)+'/mês':''}`));
+  L.push('',`🛒 Compras: ${r.compras.length} (${r.compras.filter(c=>c.status==='recebido').length} recebidas)`,`🥫 Itens para repor: ${r.crit.map(e=>e.nome).join(', ')||'nenhum'}`,`🔧 Problemas: ${r.probs.length} registrados, ${r.res.length} resolvidos${r.res.length?' (média '+dur(r.medRes)+')':''}`,`✅ Tarefas feitas: ${r.tf.length} (${r.tf.length?Math.round(r.tfPrazo/r.tf.length*100):0}% no prazo)`,`🚪 Portaria: ${r.vis.length} entradas · ${r.oc.length} ocorrências`,`👥 Ausências registradas: ${r.aus.length}`,`📊 Indicadores da avaliação: ${r.nota}% das metas`);return L.join('\n')}
+function relImprimir(){const r=relDados(),tab=(cab,lin)=>`<table><thead><tr>${cab.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${lin.map(l=>`<tr>${l.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cab.length}">Nada no período.</td></tr>`}</tbody></table>`;
+  const html=`<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Relatório da gestão – ${esc(r.nome)}</title><style>body{font:14px Arial,sans-serif;margin:28px;color:#222}h1{font-size:22px;margin:0}h2{font-size:16px;margin:22px 0 6px;border-bottom:2px solid #F86000;padding-bottom:4px}table{border-collapse:collapse;width:100%;margin-top:4px}th,td{border:1px solid #ccc;padding:5px 7px;text-align:left;font-size:12px}th{background:#f3f3f3}.k{display:flex;gap:18px;flex-wrap:wrap;margin-top:10px}.k div{border:1px solid #ddd;border-radius:6px;padding:8px 12px}.k b{display:block;font-size:18px}@media print{button{display:none}}</style>
+  <button onclick="print()" style="float:right;padding:8px 14px">Imprimir / salvar PDF</button><h1>Relatório da gestão · ${esc(db.config.escola)}</h1><p>Período: ${esc(r.nome)} · gerado em ${fmtDH(Date.now())} por ${esc(quem())}</p>
+  <div class="k"><div><b>${brl(r.totalGasto)}</b>gastos</div><div><b>${brl(r.economia)}</b>economia</div><div><b>${r.nota}%</b>das metas</div><div><b>${r.vis.length}</b>entradas</div><div><b>${r.res.length}/${r.probs.length}</b>problemas resolvidos</div></div>
+  <h2>Verba e gastos por setor</h2>${tab(['Setor','Verba mensal','Gasto no período'],r.porSetor.map(s=>[s.nome,brl(s.verba),brl(s.gasto)]))}
+  <h2>Gastos</h2>${tab(['Data','Descrição','Setor','Fornecedor','Valor'],r.gastos.sort((x,y)=>x.t-y.t).map(x=>[dataBR(x.t),x.desc,x.setor,x.forn||'',brl(x.valor)]))}
+  <h2>Compras</h2>${tab(['Data','Item','Fornecedor','Valor','Economia','Situação'],r.compras.map(c=>[dataBR(c.criado),c.item,cotEsc(c).forn,brl(cotEsc(c).valor),brl(econCompra(c)),{aprovar:'Para aprovar',pedido:'A receber',recebido:'Recebida'}[c.status]]))}
+  <h2>Estoque para repor</h2>${tab(['Item','Setor','Quantidade','Mínimo','Acaba em'],r.crit.map(e=>[e.nome,e.setor,(+e.qtd||0)+' '+(e.un||''),e.min,estDias(e)===Infinity?'—':estDias(e)+' dias']))}
+  <h2>Problemas de infraestrutura</h2>${tab(['Data','Problema','Local','Situação','Tempo'],r.probs.map(x=>[dataBR(x.t),x.titulo,x.local||'',x.status,x.fim?dur(x.fim-x.t):'']))}
+  <h2>Tarefas concluídas</h2>${tab(['Tarefa','Responsável','Prazo','Feita em'],r.tf.map(t=>[t.titulo,t.paraNome,t.prazo?dBR(t.prazo):'',dataBR(t.feitaEm)]))}
+  <h2>Indicadores da avaliação</h2>${tab(['Indicador','Grupo','Valor','Meta','Atingido'],G_().indicadores.map(x=>[x.nome,x.grupo,indValor(x)==null?'—':indValor(x)+(x.un==='%'?'%':''),x.meta+(x.un==='%'?'%':''),indPct(x)==null?'—':indPct(x)+'%']))}
+  <h2>Portaria</h2><p>${r.vis.length} entradas no período · ${r.oc.length} ocorrências.</p>${tab(['Data','Ocorrência'],r.oc.map(o=>[fmtDH(o.t),o.det]))}</html>`;
+  const w=window.open('','_blank');if(!w){toast('O navegador bloqueou a janela. Permita pop-ups para gerar o PDF.');return}w.document.open();w.document.write(html);w.document.close()}
+function abrirRelG(){const k=ui.rgPerG||'mes';const txt=relTextoG();
+  abrirSheet(`${head('Relatórios')}<div class="filtros">${[['mes','Este mês'],['mesant','Mês passado'],['7d','Últimos 7 dias'],['tri','Trimestre']].map(([v,t])=>`<button class="${k===v?'on':''}" data-act="relPerG" data-id="${v}">${t}</button>`).join('')}</div>
+    <div class="rel-actions"><button class="btn" data-act="relImp">${ic('file')}Relatório completo (PDF)</button><a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic('chat')}Resumo no WhatsApp</a></div>
+    <div class="field"><label>Resumo</label><textarea style="min-height:220px" readonly>${esc(txt)}</textarea></div>
+    <p class="eyebrow">Planilhas (abrem no Excel)</p><div class="fer-g">${[['gastos','Gastos'],['compras','Compras'],['estoque','Estoque'],['problemas','Problemas'],['tarefas','Tarefas'],['portaria','Entradas da portaria'],['patrimonio','Patrimônio'],['ausencias','Folgas e faltas']].map(([v,t])=>`<button data-act="relCsv" data-id="${v}">${ic('copy')}<b>${t}</b><small>baixar planilha</small></button>`).join('')}</div>`,'Relatórios')}
+function relCsv(k){const r=relDados(),g=G_(),n=`${k}-${r.nome}`;
+  if(k==='gastos')return csvBaixar(n,['Data','Descrição','Setor','Fornecedor','Valor'],r.gastos.map(x=>[dataBR(x.t),x.desc,x.setor,x.forn||'',String(x.valor).replace('.',',')]));
+  if(k==='compras')return csvBaixar(n,['Data','Item','Setor','Qtd','Fornecedor escolhido','Valor','Economia','Situação'],r.compras.map(c=>[dataBR(c.criado),c.item,c.setor,c.qtd+' '+(c.un||''),cotEsc(c).forn,String(cotEsc(c).valor).replace('.',','),String(econCompra(c)).replace('.',','),c.status]));
+  if(k==='estoque')return csvBaixar('estoque',['Item','Setor','Quantidade','Unidade','Mínimo','Consumo/dia','Acaba em (dias)'],g.estoque.map(e=>[e.nome,e.setor,e.qtd,e.un,e.min,e.consumo,estDias(e)===Infinity?'':estDias(e)]));
+  if(k==='problemas')return csvBaixar(n,['Data','Problema','Local','Tipo','Situação','Resolvido em'],r.probs.map(x=>[dataBR(x.t),x.titulo,x.local,x.tipo,x.status,x.fim?dataBR(x.fim):'']));
+  if(k==='tarefas')return csvBaixar(n,['Tarefa','Para','Prazo','Situação','Feita em'],g.tarefas.map(t=>[t.titulo,t.paraNome,t.prazo?dBR(t.prazo):'',t.status,t.feitaEm?dataBR(t.feitaEm):'']));
+  if(k==='portaria')return csvBaixar(n,['Data','Entrada','Saída','Nome','Tipo','Destino','Aluno'],r.vis.map(v=>{const p=pessoa(v.pid)||{};return [dataBR(v.entrada),hhmm(v.entrada),v.saida?hhmm(v.saida):'',nomeCurto(p),TIPOS[p.tipo]||'',destinoTxt(v),v.aluno||'']}));
+  if(k==='patrimonio')return csvBaixar('patrimonio',['Plaqueta','Bem','Local','Estado','Valor'],g.patrimonio.map(x=>[x.plaqueta,x.nome,x.local,x.estado,String(x.valor||'').replace('.',',')]));
+  if(k==='ausencias')return csvBaixar(n,['Pessoa','Tipo','De','Até','Observação'],g.ausencias.map(a=>[a.nome,a.tipo,dBR(a.ini),a.fim?dBR(a.fim):'',a.obs||'']))}
+/* ---------- cartões ---------- */
+const _gCardBody4=gCardBody;gCardBody=function(c){const g=G_();
+  if(c.tipo==='indicadores'){const n=indNota(),ruins=g.indicadores.filter(x=>{const p=indPct(x);return p!=null&&p<80});return `<div><div class="gc-big">${n}%</div><div class="gc-sub">das metas da avaliação atingidas (estimativa)</div></div><div class="gbar${n<80?' ruim':''}"><i style="width:${n}%"></i></div><ul class="gc-l">${ruins.slice(0,4).map(x=>`<li><span>${esc(x.nome)}</span><span class="ruim">${indPct(x)}%</span></li>`).join('')||'<li><span>Todos os indicadores perto da meta.</span></li>'}</ul>`}
+  if(c.tipo==='equipe'){const ps=eqPessoas(),on=ps.filter(u=>eqStatus(u)[0]==='st-on'),aus=ps.filter(u=>ausHoje(u));const fer=g.ausencias.filter(a=>a.tipo==='Férias'&&a.ini>hojeISO()&&diasAte(a.ini)<=30);
+    return `<div class="gc-big">${on.length}</div><div class="gc-sub">trabalhando agora · ${ps.length} na equipe</div><ul class="gc-l">${aus.map(u=>`<li><span>${esc(u.nome)}</span><span class="atn">${esc(ausHoje(u).tipo)}</span></li>`).join('')}${fer.map(a=>`<li><span>${esc(a.nome)}</span><span>férias em ${diasAte(a.ini)} dias</span></li>`).join('')}${db.plantao&&db.plantao.resp?`<li><span>Plantão</span><span>${esc(db.plantao.resp)}</span></li>`:''}</ul>`}
+  if(c.tipo==='relatorios')return `<p class="gc-sub" style="margin:0">Relatório do mês em PDF, resumo no WhatsApp e planilhas para o Excel.</p>`;
+  if(c.tipo==='patrimonio'){const v=g.patrimonio.filter(x=>x.estado!=='Baixado').reduce((a,x)=>a+(+x.valor||0),0),r=g.patrimonio.filter(x=>/Ruim|conserto/.test(x.estado)).length;return `<div class="gc-big">${g.patrimonio.length}</div><div class="gc-sub">bens · ${brl(v)}${r?` · <b class="ruim">${r} com problema</b>`:''}</div>`}
+  return _gCardBody4(c)};
+const _gDetalhe4=gDetalhe;gDetalhe=function(tipo,cid){if(tipo==='equipe'){abrirEquipeG();return}if(tipo==='patrimonio'){abrirPat();return}if(tipo==='indicadores'){abrirInd();return}if(tipo==='relatorios'){abrirRelG();return}return _gDetalhe4(tipo,cid)};
+RESUMO_EXT.push(L=>{const aus=eqPessoas().filter(u=>ausHoje(u));if(aus.length)L.push(`👥 Ausentes hoje: ${aus.map(u=>primeiro(u.nome)+' ('+ausHoje(u).tipo.toLowerCase()+')').join(', ')}`);const n=indNota();if(n&&n<80)L.push(`📊 Indicadores da avaliação em ${n}% das metas`)});
+BUSCA_FONTES.push(q=>G_().patrimonio.filter(x=>norm(x.plaqueta+' '+x.nome+' '+x.local).includes(q)).slice(0,6).map(x=>({t:x.nome,s:'Patrimônio · '+(x.local||'')+' · '+(x.plaqueta||''),a:'ptForm',id:x.id})));
+Object.assign(actions,{
+  eqHor:id=>{const u=(db.usuarios||[]).find(x=>x.id===id);if(!u)return;abrirSheet(`${head(esc(u.nome))}<div class="field"><label for="ehH">Horário / escala</label><input id="ehH" value="${esc(G_().horarios[id]||'')}" placeholder="Ex.: Seg a sex, 7h às 16h · ou 12x36 diurno"></div>${u.tel?`<p class="note">Telefone: ${esc(maskTel(u.tel))}</p>`:''}<div class="rel-actions"><button class="btn" data-act="eqHorSalvar" data-id="${id}">${ic('check')}Salvar</button><button class="btn ghost" data-act="gAbrirTipo" data-id="equipe">‹ Voltar</button></div>`,'Horário')},
+  eqHorSalvar:id=>{G_().horarios[id]=($('#ehH').value||'').trim();save();abrirEquipeG();gRedes()},
+  auAdd:()=>{const u=(db.usuarios||[]).find(x=>x.id===$('#auP').value);if(!u)return;const ini=$('#auI').value;if(!ini){toast('Escolha a data.');return}let fim=$('#auF').value||'';if(fim&&fim<ini)fim=ini;G_().ausencias.push({id:uid(),uid:u.id,nome:u.nome,tipo:$('#auT').value,ini,fim,obs:($('#auO').value||'').trim(),por:quem(),t:Date.now()});save();abrirEquipeG();gRedes();toast('Registrado.')},
+  auDel:id=>{if(ui.auDel!==id){ui.auDel=id;abrirEquipeG();return}const g=G_();g.ausencias=g.ausencias.filter(x=>x.id!==id);ui.auDel=null;save();abrirEquipeG();gRedes()},
+  ptForm:id=>{ui.ptDel=null;ptForm(id)},
+  ptLocal:l=>{ui.ptL=l;abrirPat()},
+  ptSalvar:id=>{const n=($('#ptN').value||'').trim();if(!n){$('#ptN').focus();return}const d={plaqueta:$('#ptP').value.trim(),nome:n,local:$('#ptL').value.trim(),estado:$('#ptE').value,valor:parseFloat($('#ptV').value)||0,obs:$('#ptO').value.trim()};const g=G_();if(id==='new')g.patrimonio.push({id:uid(),...d,t:Date.now()});else Object.assign(g.patrimonio.find(x=>x.id===id)||{},d);save();abrirPat();gRedes()},
+  ptDel:id=>{if(ui.ptDel!==id){ui.ptDel=id;ptForm(id);return}const g=G_();g.patrimonio=g.patrimonio.filter(x=>x.id!==id);ui.ptDel=null;save();abrirPat();gRedes()},
+  ptExport:()=>relCsv('patrimonio'),
+  indAdd:()=>{const n=($('#inN').value||'').trim();if(!n){$('#inN').focus();return}G_().indicadores.push({id:uid(),nome:n,grupo:($('#inG').value||'Outros').trim(),auto:'',meta:+$('#inM').value||0,un:$('#inU').value,valor:''});save();abrirInd();gRedes()},
+  indDel:id=>{if(ui.indDel!==id){ui.indDel=id;abrirInd();return}const g=G_();g.indicadores=g.indicadores.filter(x=>x.id!==id);ui.indDel=null;save();abrirInd();gRedes()},
+  indPadrao:()=>{if(!ui.indPadrao){ui.indPadrao=true;abrirInd();return}G_().indicadores=IND_PAD();ui.indPadrao=false;save();abrirInd();gRedes()},
+  relPerG:k=>{ui.rgPerG=k;abrirRelG()},
+  relImp:()=>relImprimir(),
+  relCsv:k=>relCsv(k)
+});
+/* exemplos na escola simulada */
+function demoExtra5(){if(!db.config.demo1||db.config.demo5)return false;const g=G_(),now=Date.now(),D=864e5;const U=n=>(db.usuarios||[]).find(u=>u.nome===n);const dia=k=>isoDia(new Date(now+k*D));
+  const hor={'Ricardo Almeida':'12x36 diurno (6h às 18h)','Paulo Henrique Santos':'12x36 diurno (6h às 18h)','Marcelo Oliveira':'12x36 noturno (18h às 6h)','Fábio Rocha':'12x36 noturno (18h às 6h)','Sérgio Martins':'Seg a sex, 8h às 17h','Aparecida Ferreira':'Seg a sex, 6h às 15h','Lúcia Mendes':'Seg a sex, 7h às 16h','Juliana Costa':'Seg a sex, 7h às 16h','Patrícia Lima':'Seg a sex, 8h às 17h','Fernanda Souza':'Seg a sex, 12h às 21h','Camila Ribeiro':'Seg a sex, 7h às 16h'};
+  Object.entries(hor).forEach(([n,h])=>{const u=U(n);if(u&&!g.horarios[u.id])g.horarios[u.id]=h});
+  const au=(n,tipo,a,b,obs)=>{const u=U(n);if(u)g.ausencias.push({id:uid(),uid:u.id,nome:u.nome,tipo,ini:dia(a),fim:b==null?'':dia(b),obs:obs||'',por:'Sérgio Martins',t:now})};
+  au('Patrícia Lima','Folga',0,0,'Banco de horas');au('Camila Ribeiro','Férias',12,41);au('Lúcia Mendes','Falta',-3,-3);au('Fernanda Souza','Curso / treinamento',2,2,'Treinamento do sistema da matrícula');
+  if(!g.patrimonio.length)g.patrimonio=[['0001','Projetor Epson PowerLite','Sala de vídeo','Bom',3200],['0002','Notebook Dell Latitude','Secretaria','Bom',4100],['0003','Notebook Dell Latitude','Coordenação','Regular',4100],['0004','Impressora multifuncional','Secretaria','Em conserto',1850],['0005','Geladeira industrial 4 portas','Cozinha','Bom',8900],['0006','Fogão industrial 6 bocas','Cozinha','Bom',3400],['0007','Freezer horizontal 500 L','Cozinha','Regular',4200],['0008','Câmera de segurança (pátio)','Pátio','Ruim',650],['0009','Rádio comunicador Motorola','Portaria','Bom',980],['0010','Rádio comunicador Motorola','Portaria','Bom',980],['0011','Bebedouro industrial','Corredor A','Bom',2300],['0012','Ar-condicionado 12.000 BTU','Secretaria','Em conserto',2700],['0013','Mesa de reunião','Coordenação','Bom',1500],['0014','Caixa de som amplificada','Pátio','Regular',1200]].map(([plaqueta,nome,local,estado,valor])=>({id:uid(),plaqueta,nome,local,estado,valor,obs:'',t:now}));
+  const ind=g.indicadores;const set=(re,v)=>{const x=ind.find(y=>re.test(y.nome));if(x&&!x.auto)x.valor=v};set(/alimenta/i,8.4);set(/limpeza/i,7.6);set(/Banheiros/i,94);set(/Wi-Fi/i,88);
+  if(!db.config.escola||db.config.escola==='Nome da escola')db.config.escola='E.E. Modelo (demonstração)';
+  db.config.demo5=now;return true}
+try{if(demoExtra5())save()}catch(e){console.warn('demo5',e)}
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
