@@ -687,6 +687,18 @@ img.av{object-fit:cover;padding:0}
 .cx-it:last-child{border-bottom:0}
 .cx-it .a{display:flex;gap:6px;flex-wrap:wrap}
 .eq-sec{display:grid;gap:10px}
+
+/* ===== Lote 2: tarefas, comunicados ===== */
+.tf-it{display:flex;gap:12px;align-items:flex-start;padding:12px;border-bottom:1px solid var(--line)}
+.tf-it:last-child{border-bottom:0}
+.tf-ck{width:30px;height:30px;flex:none;border-radius:8px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--on-brand)}
+.tf-ck.on{background:var(--brand);border-color:var(--brand)}
+.tf-it .t{display:grid;gap:2px;min-width:0;flex:1}
+.tf-it .t small{color:var(--muted)}
+.tf-it.feita .t b{text-decoration:line-through;color:var(--muted)}
+.cm{padding:14px;display:grid;gap:8px;border-left:4px solid var(--brand)}
+.cm.lido{border-left-color:var(--line);opacity:.85}
+.cm p{margin:0;white-space:pre-wrap}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -2927,6 +2939,85 @@ function demoExtra2(){if(!db.config.demo1||db.config.demo2)return false;const g=
   pd('Lúcia Mendes','Óleo de soja','20','L',false,'','novo','',1);
   db.config.demo2=now;return true}
 try{if(demoExtra2())save()}catch(e){console.warn('demo2',e)}
+
+/* ===== LOTE 2: Agenda unificada, Tarefas e delegação, Comunicados ===== */
+GCAT.tarefas=['Tarefas da equipe','check'];GCAT.comunicados=['Comunicados','bell'];
+if(!GPAD.includes('tarefas'))GPAD.splice(GPAD.indexOf('infra'),0,'tarefas');if(!GPAD.includes('comunicados'))GPAD.splice(GPAD.indexOf('portaria'),0,'comunicados');
+const _gPatch2=gPatch;gPatch=function(){const g=_gPatch2();g.tarefas=g.tarefas||[];g.comunicados=g.comunicados||[];
+  if((g.cardsV||1)<3){const ix=g.cards.findIndex(c=>c.tipo==='infra');if(!g.cards.some(c=>c.tipo==='tarefas'))g.cards.splice(ix<0?g.cards.length:ix,0,{id:uid(),tipo:'tarefas',titulo:GCAT.tarefas[0]});
+    const ip=g.cards.findIndex(c=>c.tipo==='portaria');if(!g.cards.some(c=>c.tipo==='comunicados'))g.cards.splice(ip<0?g.cards.length:ip,0,{id:uid(),tipo:'comunicados',titulo:GCAT.comunicados[0]});g.cardsV=3}return g};
+const REPETE={'':'Não repete',diaria:'Todo dia',uteis:'Todo dia útil',semanal:'Toda semana'};
+const tfAtrasada=t=>t.status!=='feita'&&t.prazo&&t.prazo<hojeISO();
+function proxData(iso,rep){const d=new Date(iso+'T12:00:00');do{d.setDate(d.getDate()+(rep==='semanal'?7:1))}while(rep==='uteis'&&(d.getDay()===0||d.getDay()===6));return isoDia(d)}
+function tfLinha(t,modo){const at=tfAtrasada(t),feita=t.status==='feita';
+  return `<div class="tf-it${feita?' feita':''}"><button class="tf-ck${feita?' on':''}" data-act="tfFeita" data-id="${t.id}" aria-label="${feita?'Reabrir':'Marcar como feita'}">${feita?ic('check'):''}</button><span class="t"><b>${esc(t.titulo)}</b><small>${modo==='gestor'?esc(t.paraNome)+' · ':''}${t.prazo?(at?'<span class="ruim" style="color:var(--danger);font-weight:700">atrasada · era para '+dBR(t.prazo)+'</span>':'até '+dBR(t.prazo)):'sem prazo'}${t.repete?' · '+REPETE[t.repete].toLowerCase():''}${t.obs?' · '+esc(t.obs):''}${feita&&t.feitaEm?' · feita '+dataBR(t.feitaEm)+' '+hhmm(t.feitaEm):''}</small></span>${modo==='gestor'&&!feita?`<span class="a" style="display:flex;gap:6px;flex:none">${at?`<button class="btn sm out" data-act="tfCobrar" data-id="${t.id}">Cobrar</button>`:''}<button class="icon-btn sm" data-act="tfDel" data-id="${t.id}" aria-label="Apagar tarefa">${ui.tfDel===t.id?'✓?':ic('trash')}</button></span>`:''}</div>`}
+function minhasTarefasHTML(u){const ts=G_().tarefas.filter(t=>t.para===u.id).sort((a,b)=>(a.status==='feita')-(b.status==='feita')||(a.prazo||'9').localeCompare(b.prazo||'9'));const abertas=ts.filter(t=>t.status!=='feita'),feitas=ts.filter(t=>t.status==='feita').slice(0,5);
+  return `<section class="panel cfg eq-sec"><p class="eyebrow">Minhas tarefas</p>${abertas.length?`<div class="list">${abertas.map(t=>tfLinha(t)).join('')}</div>`:'<p class="note">Nenhuma tarefa pendente. 👍</p>'}${feitas.length?`<details><summary class="note" style="cursor:pointer">Feitas recentemente (${feitas.length})</summary><div class="list" style="margin-top:8px">${feitas.map(t=>tfLinha(t)).join('')}</div></details>`:''}</section>`}
+const cmParaMim=(c,u)=>c.para==='todos'||c.para===u.perfil;
+function comunicadosHTML(u){const cs=G_().comunicados.filter(c=>cmParaMim(c,u)).sort((a,b)=>((a.lidos||[]).includes(u.id))-((b.lidos||[]).includes(u.id))||b.t-a.t).slice(0,8);if(!cs.length)return '';
+  return `<section class="eq-sec"><p class="eyebrow">Comunicados da gestão</p>${cs.map(c=>{const li=(c.lidos||[]).includes(u.id);return `<div class="panel cm${li?' lido':''}"><b>${esc(c.titulo)}</b><p>${esc(c.txt)}</p><small class="note">${esc(c.deNome)} · ${dataBR(c.t)} ${hhmm(c.t)}</small>${li?'<span class="g-tag ok" style="justify-self:start">Você leu</span>':`<button class="btn sm" style="justify-self:start" data-act="cmLi" data-id="${c.id}">${ic('check')}Li e entendi</button>`}</div>`}).join('')}</section>`}
+EQ_SECOES.unshift(comunicadosHTML,minhasTarefasHTML);
+EQ_BADGE.push(u=>G_().tarefas.filter(t=>t.para===u.id&&t.status!=='feita'&&t.prazo&&t.prazo<=hojeISO()).length,u=>G_().comunicados.filter(c=>cmParaMim(c,u)&&!(c.lidos||[]).includes(u.id)).length);
+const eqPessoas=()=>(db.usuarios||[]).filter(u=>u.ativo!==false&&u.perfil!=='admin').sort((a,b)=>norm(a.nome).localeCompare(norm(b.nome)));
+const cmAlvos=c=>eqPessoas().filter(u=>cmParaMim(c,u));
+const CM_PARA={todos:'Toda a equipe',porteiro:'Portaria',secretaria:'Secretaria',cozinha:'Cozinha',gestor:'Gestão'};
+/* cartões */
+const _gCardBody2=gCardBody;gCardBody=function(c){const g=G_();
+  if(c.tipo==='tarefas'){const ab=g.tarefas.filter(t=>t.status!=='feita'),at=ab.filter(tfAtrasada),fh=g.tarefas.filter(t=>t.status==='feita'&&t.feitaEm>=hoje0());
+    return `<div class="gc-big">${ab.length}</div><div class="gc-sub">${ab.length===1?'tarefa aberta':'tarefas abertas'}${at.length?` · <b class="ruim">${at.length} atrasada(s)</b>`:''} · ${fh.length} feita(s) hoje</div><ul class="gc-l">${ab.sort((a,b)=>(a.prazo||'9').localeCompare(b.prazo||'9')).slice(0,4).map(t=>`<li><span>${esc(t.titulo)}</span><span class="${tfAtrasada(t)?'ruim':''}">${esc(primeiro(t.paraNome))}</span></li>`).join('')||'<li><span>Nenhuma tarefa aberta.</span></li>'}</ul>`}
+  if(c.tipo==='comunicados'){const cs=g.comunicados.slice().sort((a,b)=>b.t-a.t);return `<ul class="gc-l">${cs.slice(0,4).map(x=>{const al=cmAlvos(x).length,li=(x.lidos||[]).filter(id=>cmAlvos(x).some(u=>u.id===id)).length;return `<li><span>${esc(x.titulo)}</span><span class="${li<al?'atn':''}">${li}/${al} leram</span></li>`}).join('')||'<li><span>Nenhum comunicado. Toque em Abrir para escrever.</span></li>'}</ul>`}
+  return _gCardBody2(c)};
+const _gDetalhe2=gDetalhe;gDetalhe=function(tipo,cid){const g=G_();
+  if(tipo==='tarefas'){const ab=g.tarefas.filter(t=>t.status!=='feita').sort((a,b)=>(a.prazo||'9').localeCompare(b.prazo||'9')),fe=g.tarefas.filter(t=>t.status==='feita').sort((a,b)=>b.feitaEm-a.feitaEm).slice(0,10);
+    abrirSheet(`${head('Tarefas da equipe')}<div class="g-form"><div class="field"><label for="tfT">Nova tarefa</label><input id="tfT" placeholder="Ex.: conferir os extintores do 2º andar"></div>
+      <div class="g-row3"><div class="field"><label for="tfP">Para quem</label><select id="tfP">${eqPessoas().map(u=>`<option value="${u.id}">${esc(u.nome)} · ${esc(PERFIL_NOME[u.perfil]||'')}</option>`).join('')}</select></div><div class="field"><label for="tfD">Prazo</label><input id="tfD" type="date" value="${hojeISO()}"></div><div class="field"><label for="tfR">Repetir</label><select id="tfR">${Object.entries(REPETE).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div></div>
+      <div class="field"><label for="tfO">Detalhes (opcional)</label><input id="tfO"></div><button class="btn" data-act="tfAdd">${ic('plus')}Mandar tarefa</button></div>
+      <p class="eyebrow">Abertas (${ab.length})</p><div class="list">${ab.map(t=>tfLinha(t,'gestor')).join('')||'<p class="empty">Nenhuma.</p>'}</div>
+      ${fe.length?`<p class="eyebrow">Feitas recentemente</p><div class="list">${fe.map(t=>tfLinha(t,'gestor')).join('')}</div>`:''}`,'Tarefas');return}
+  if(tipo==='comunicados'){const cs=g.comunicados.slice().sort((a,b)=>b.t-a.t);
+    abrirSheet(`${head('Comunicados')}<div class="g-form"><div class="field"><label for="cmT">Título</label><input id="cmT" placeholder="Ex.: Reunião geral na sexta às 16h"></div><div class="field"><label for="cmX">Mensagem</label><textarea id="cmX"></textarea></div>
+      <div class="field"><label for="cmP">Para</label><select id="cmP">${Object.entries(CM_PARA).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select></div><button class="btn" data-act="cmAdd">${ic('upload')}Publicar comunicado</button></div>
+      <div class="list">${cs.map(x=>{const al=cmAlvos(x),nl=al.filter(u=>!(x.lidos||[]).includes(u.id));return `<div class="g-it" style="align-items:flex-start"><span class="t"><b>${esc(x.titulo)}</b><small>${CM_PARA[x.para]||''} · ${dataBR(x.t)} · ${al.length-nl.length} de ${al.length} leram${nl.length?' · falta: '+nl.map(u=>primeiro(u.nome)).join(', '):''}</small></span><button class="icon-btn sm" data-act="cmDel" data-id="${x.id}" aria-label="Apagar">${ui.cmDel===x.id?'✓?':ic('trash')}</button></div>`}).join('')||'<p class="empty">Nenhum comunicado.</p>'}</div>`,'Comunicados');return}
+  return _gDetalhe2(tipo,cid)};
+CAIXA_EXT.push(out=>G_().tarefas.filter(tfAtrasada).forEach(t=>out.push({t:Date.now(),ic:'check',tit:`Tarefa atrasada: ${t.titulo}`,sub:`${t.paraNome} · era para ${dBR(t.prazo)}`,urg:true,acts:[['tfCobrar',t.id,'Cobrar',''],['gAbrirTipo','tarefas','Ver','ghost']]})));
+RESUMO_EXT.push(L=>{const g=G_(),h=hojeISO(),hj=g.tarefas.filter(t=>t.status!=='feita'&&t.prazo===h),at=g.tarefas.filter(tfAtrasada);if(hj.length)L.push(`✅ ${hj.length} ${hj.length===1?'tarefa da equipe vence':'tarefas da equipe vencem'} hoje`);if(at.length)L.push(`⚠️ ${at.length} ${at.length===1?'tarefa atrasada':'tarefas atrasadas'}`)});
+BUSCA_FONTES.push(q=>G_().tarefas.filter(t=>norm(t.titulo).includes(q)).slice(0,6).map(t=>({t:t.titulo,s:'Tarefa · '+primeiro(t.paraNome),a:'gAbrirTipo',id:'tarefas'})),q=>G_().comunicados.filter(c=>norm(c.titulo+' '+c.txt).includes(q)).slice(0,4).map(c=>({t:c.titulo,s:'Comunicado',a:'gAbrirTipo',id:'comunicados'})));
+/* agenda unificada: vencimentos, entregas e tarefas no mesmo calendário */
+const _calItens2=calItens;calItens=function(d0,d1){const out=_calItens2(d0,d1),F=ui.calF||'tudo',u=usuarioAtual();if(!u||F==='portaria')return out;const g=G_(),ger=perfil().gerir;
+  for(let d=d0;d<=d1;d=addDias(d,1)){
+    g.tarefas.forEach(t=>{if(t.prazo!==d||(!ger&&t.para!==u.id)||(F==='meus'&&t.para!==u.id))return;out.push({d,src:'gt',id:t.id,hora:'',fim:'',titulo:t.titulo,sub:'Tarefa · '+primeiro(t.paraNome),cls:'c-tar',feito:t.status==='feita',tarefa:true})});
+    if(ger&&F!=='meus'){g.venc.forEach(v=>{if(v.data===d)out.push({d,src:'gv',id:v.id,hora:'',fim:'',titulo:'📅 '+v.nome,sub:'Vencimento',cls:'c-lem'})});
+      g.compras.forEach(c=>{if(c.status==='pedido'&&c.prev===d)out.push({d,src:'gc',id:c.id,hora:'',fim:'',titulo:'📦 Entrega: '+c.item,sub:cotEsc(c).forn,cls:'c-ag'})})}}
+  return out.sort((x,y)=>(x.d+(x.hora||'00:00')).localeCompare(y.d+(y.hora||'00:00')))};
+const _calVer2=actions.calVer;actions.calVer=function(id,b,e){const [src,i]=String(id).split('|');if(src==='gv'){gDetalhe('venc');return}if(src==='gc'){gDetalhe('compras');return}if(src==='gt'){const t=G_().tarefas.find(x=>x.id===i);if(!t)return;
+  abrirSheet(`${head('Tarefa')}<div class="list">${tfLinha(t,perfil().gerir?'gestor':'')}</div>`,'Tarefa');return}return _calVer2(id,b,e)};
+/* ações */
+Object.assign(actions,{
+  tfAdd:()=>{const ti=($('#tfT').value||'').trim();if(!ti){$('#tfT').focus();return}const pu=(db.usuarios||[]).find(x=>x.id===$('#tfP').value);if(!pu)return;const me=usuarioAtual()||{};
+    G_().tarefas.push({id:uid(),titulo:ti,para:pu.id,paraNome:pu.nome,prazo:$('#tfD').value||'',repete:$('#tfR').value||'',obs:($('#tfO').value||'').trim(),status:'aberta',criado:Date.now(),por:me.id,porNome:me.nome});save();gDetalhe('tarefas');gRedes();toast('Tarefa enviada para '+primeiro(pu.nome)+'.')},
+  tfFeita:id=>{const g=G_(),t=g.tarefas.find(x=>x.id===id);if(!t)return;if(t.status==='feita'){t.status='aberta';t.feitaEm=null}else{t.status='feita';t.feitaEm=Date.now();t.feitaPor=quem();
+      if(t.repete&&!t.proxCriada){t.proxCriada=true;g.tarefas.push({...t,id:uid(),status:'aberta',feitaEm:null,feitaPor:'',proxCriada:false,prazo:proxData(t.prazo||hojeISO(),t.repete),criado:Date.now()})}}
+    save();if(!sheet.hidden&&$('.sheet-panel [data-act="tfAdd"]'))gDetalhe('tarefas');else if(!sheet.hidden)fecharSheet();const y=window.scrollY;render();window.scrollTo(0,y)},
+  tfCobrar:id=>{const t=G_().tarefas.find(x=>x.id===id),me=usuarioAtual();if(!t||!me)return;const c=convPriv(me.id,t.para);db.chat.msgs.push({id:uid(),c,de:me.id,deNome:me.nome,txt:`Lembrete: a tarefa "${t.titulo}" estava prevista para ${dBR(t.prazo)}. Consegue concluir hoje? Quando terminar, marque como feita na aba Tarefas.`,t:Date.now()});t.cobrada=Date.now();save();toast('Lembrete enviado no chat para '+primeiro(t.paraNome)+'.')},
+  tfDel:id=>{if(ui.tfDel!==id){ui.tfDel=id;gDetalhe('tarefas');return}const g=G_();g.tarefas=g.tarefas.filter(x=>x.id!==id);ui.tfDel=null;save();gDetalhe('tarefas');gRedes()},
+  cmAdd:()=>{const t=($('#cmT').value||'').trim(),x=($('#cmX').value||'').trim();if(!t){$('#cmT').focus();return}const me=usuarioAtual()||{};G_().comunicados.push({id:uid(),titulo:t,txt:x,para:$('#cmP').value,t:Date.now(),de:me.id,deNome:me.nome,lidos:[me.id]});save();gDetalhe('comunicados');gRedes();toast('Comunicado publicado.')},
+  cmDel:id=>{if(ui.cmDel!==id){ui.cmDel=id;gDetalhe('comunicados');return}const g=G_();g.comunicados=g.comunicados.filter(x=>x.id!==id);ui.cmDel=null;save();gDetalhe('comunicados');gRedes()},
+  cmLi:id=>{const c=G_().comunicados.find(x=>x.id===id),u=usuarioAtual();if(!c||!u)return;c.lidos=c.lidos||[];if(!c.lidos.includes(u.id))c.lidos.push(u.id);save();const y=window.scrollY;render();window.scrollTo(0,y)}
+});
+/* aviso sonoro para a equipe: tarefa nova ou comunicado novo */
+let _eqUlt=null;setInterval(()=>{const u=usuarioAtual();if(!u||ui.modo==='pais'){_eqUlt=null;return}let sig;try{const g=G_();sig=g.tarefas.filter(t=>t.para===u.id&&t.status!=='feita').length+'|'+g.comunicados.filter(c=>cmParaMim(c,u)&&!(c.lidos||[]).includes(u.id)).length}catch(e){return}
+  if(_eqUlt!==null&&sig!==_eqUlt){const [a,b]=sig.split('|').map(Number),[a0,b0]=_eqUlt.split('|').map(Number);if(a>a0||b>b0){try{somAviso()}catch(e){}toast(b>b0?'Novo comunicado da gestão (aba Tarefas).':'Você recebeu uma tarefa nova (aba Tarefas).');if(ui.tab==='equipe'&&sheet.hidden&&!(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))render()}}_eqUlt=sig},2500);
+/* exemplos na escola simulada */
+function demoExtra3(){if(!db.config.demo1||db.config.demo3)return false;const g=G_(),now=Date.now(),H=36e5,D=864e5;const U=n=>(db.usuarios||[]).find(u=>u.nome===n);const ger=U('Sérgio Martins')||{};const dia=k=>isoDia(new Date(now+k*D));
+  const tf=(titulo,nome,k,rep,status,obs)=>{const u=U(nome);if(!u)return;g.tarefas.push({id:uid(),titulo,para:u.id,paraNome:u.nome,prazo:dia(k),repete:rep||'',obs:obs||'',status:status||'aberta',feitaEm:status==='feita'?now-5*H:null,criado:now-2*D,por:ger.id,porNome:ger.nome})};
+  tf('Enviar lista de matrículas para a diretoria','Juliana Costa',0);tf('Atualizar o cadastro dos alunos novos','Patrícia Lima',-1);tf('Conferir validade dos itens da despensa','Aparecida Ferreira',0,'semanal');
+  tf('Limpar e organizar a câmara fria','Lúcia Mendes',1);tf('Ronda no pátio às 10h e às 15h','Ricardo Almeida',0,'uteis');tf('Testar lanternas e rádios','Marcelo Oliveira',-1,'semanal','feita');tf('Organizar o arquivo de documentos de 2025','Fernanda Souza',3);tf('Separar uniformes doados','Camila Ribeiro',-2);
+  const cm=(titulo,txt,para,h,lidos)=>g.comunicados.push({id:uid(),titulo,txt,para,t:now-h*H,de:ger.id,deNome:ger.nome,lidos:[ger.id,...lidos.map(n=>(U(n)||{}).id).filter(Boolean)]});
+  cm('Vistoria da Vigilância Sanitária amanhã às 9h','A cozinha e os depósitos precisam estar organizados. Portaria: avisar a gestão assim que o inspetor chegar.','todos',20,['Aparecida Ferreira','Lúcia Mendes','Juliana Costa','Ricardo Almeida']);
+  cm('Novo procedimento na entrada','A partir de segunda, todo visitante deve ser registrado no app ANTES de passar pela catraca.','porteiro',48,['Ricardo Almeida','Marcelo Oliveira']);
+  cm('Reunião geral na sexta às 16h','Pauta: avaliação do trimestre e escala de férias. Presença de toda a equipe.','todos',5,[]);
+  db.config.demo3=now;return true}
+try{if(demoExtra3())save()}catch(e){console.warn('demo3',e)}
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
