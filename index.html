@@ -1657,6 +1657,7 @@ function abrirConta(){
     ${u.global&&G.escolas.length>1?`<div class="field"><span class="lbl">Trocar de escola</span><div class="ulist">${G.escolas.map(e=>`<button class="ubtn${e.id===G.atual?' on':''}" data-act="escolaEntrar" data-id="${e.id}"><span class="ti k-pl">${ic('door')}</span><span class="row-txt"><strong>${esc(e.nome)}</strong>${e.id===G.atual?'<span class="row-meta">escola atual</span>':''}</span></button>`).join('')}</div></div>`:''}
     <div class="field"><span class="lbl">Meu avatar</span>${avPicker(u.avatar)}</div>
     <button class="btn wide" data-act="contaAvatarSalvar">${ic('check')}Salvar avatar</button>
+    ${somCfgHTML()}
     ${botaoInstalar()}
     <button class="btn ghost wide" data-act="tutorial">Ver o tutorial de novo</button>
     <button class="btn wide" data-act="sair">${ic('out')}Trocar usuário / sair</button>
@@ -2505,6 +2506,32 @@ Object.assign(actions,{
     if(new Set(hs).size!==hs.length){err.textContent='Dois plantões não podem começar no mesmo horário.';err.hidden=false;return}
     db.config.turno='custom';db.config.horarios=hs.slice().sort();ui.qtdPl=null;audit('Alterou horários dos plantões',db.config.horarios.join(', '));save();render();toast('Horários dos plantões salvos.')}
 });
+
+/* ===== SONS: clique e notificação (gerados pelo próprio navegador, sem arquivos) ===== */
+const SOM={ctx:null,cfg:{clique:true,aviso:true}};
+try{const c=JSON.parse(localStorage.getItem('portaria-som')||'null');if(c)SOM.cfg=Object.assign(SOM.cfg,c)}catch(e){}
+function somSalvar(){try{localStorage.setItem('portaria-som',JSON.stringify(SOM.cfg))}catch(e){}}
+function somCtx(){try{if(!SOM.ctx){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;SOM.ctx=new AC()}if(SOM.ctx.state==='suspended')SOM.ctx.resume();return SOM.ctx}catch(e){return null}}
+function somNota(f,ini,dur,vol,tipo){const c=somCtx();if(!c)return;const t=c.currentTime+ini,o=c.createOscillator(),g=c.createGain();o.type=tipo||'sine';o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+0.008);g.gain.exponentialRampToValueAtTime(0.0001,t+dur);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+dur+0.02)}
+function somClique(){if(SOM.cfg.clique)somNota(1500,0,0.045,0.05,'sine')}
+function somAviso(){if(!SOM.cfg.aviso)return;somNota(880,0,0.16,0.16,'triangle');somNota(1320,0.13,0.26,0.14,'triangle');try{if(navigator.vibrate)navigator.vibrate([60,40,60])}catch(e){}}
+document.addEventListener('pointerdown',e=>{if(ui.modo==='pais')return;const b=e.target.closest('button,a.btn,[data-act],label.check,.seg label');if(b&&!b.disabled)somClique()},true);
+function somCfgHTML(){return `<div class="field"><span class="lbl">Sons neste aparelho</span>
+  <label class="check"><input type="checkbox" id="somClique"${SOM.cfg.clique?' checked':''} onchange="actions.somTg('clique',this)"><span>Som de clique nos botões</span></label>
+  <label class="check"><input type="checkbox" id="somAviso"${SOM.cfg.aviso?' checked':''} onchange="actions.somTg('aviso',this)"><span>Som de notificação (mensagens do chat, avisos do setor, pedidos dos pais e hora da troca de plantão)</span></label>
+  <button type="button" class="btn ghost sm" data-act="somTeste">🔔 Testar som de notificação</button>
+  <p class="note">No iPhone, a chave do modo silencioso (na lateral) desliga os sons do app.</p></div>`}
+Object.assign(actions,{
+  somTg:(k,el)=>{SOM.cfg[k]=!!(el&&el.checked);somSalvar();if(k==='aviso'&&SOM.cfg.aviso)somAviso()},
+  somTeste:()=>somAviso()
+});
+/* toca a notificação quando algo novo chega para quem está usando o app */
+SOM.ult=null;
+setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u){SOM.ult=null;return}
+  let c={};try{c={chat:chatNaoLidas(),avisos:avisosNovos().length,pais:perfil().agenda?pendPais():0,troca:!perfil().leitura&&plVencido()?1:0}}catch(e){return}
+  const a=SOM.ult;SOM.ult=Object.assign({uid:u.id},c);if(!a||a.uid!==u.id)return;
+  if(c.chat>a.chat||c.avisos>a.avisos||c.pais>a.pais||c.troca>a.troca)somAviso()},1500);
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
