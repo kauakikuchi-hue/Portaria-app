@@ -627,6 +627,14 @@ img.av{object-fit:cover;padding:0}
 .avc-cnt{text-align:center;font-size:.8rem;color:var(--muted);margin-top:-4px}
 .avc-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 6px;scroll-snap-type:x mandatory;scrollbar-width:thin}
 .avc-strip .av-op{flex:none;scroll-snap-align:center}
+
+/* ===== Meu perfil compacto ===== */
+.pf-op{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;font-weight:700;cursor:pointer;text-align:left}
+.pf-op .pf-seta{margin-left:auto;color:var(--muted);transition:transform .15s}
+.pf-op[aria-expanded="true"] .pf-seta{transform:rotate(90deg)}
+.pf-box{display:grid;gap:12px;padding:12px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin-top:-17px;background:var(--sunk)}
+.pf-op[aria-expanded="true"]{border-radius:12px 12px 0 0}
+.khead .av-edit{border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -1653,11 +1661,12 @@ function trocarEscola(id){const en=G.escolas.find(e=>e.id===id);if(!en)return;sa
 function abrirConta(){
   const u=usuarioAtual();if(!u)return;
   abrirSheet(`${head('Meu perfil')}
-    <div class="khead">${avatar({nome:u.nome,avatar:u.avatar},true)}<div><strong style="font-size:1.1rem">${esc(u.nome)}</strong><div class="note">${u.global?'Administrador geral':esc(PERFIL_NOME[u.perfil])} · ${esc(db.config.escola)}</div></div></div>
+    <div class="khead"><button type="button" class="av-edit" data-act="pfAbre" data-id="avatar" aria-label="Editar avatar">${avatar({nome:u.nome,avatar:u.avatar},true)}</button><div><strong style="font-size:1.1rem">${esc(u.nome)}</strong><div class="note">${u.global?'Administrador geral':esc(PERFIL_NOME[u.perfil])} · ${esc(db.config.escola)}</div></div></div>
     ${u.global&&G.escolas.length>1?`<div class="field"><span class="lbl">Trocar de escola</span><div class="ulist">${G.escolas.map(e=>`<button class="ubtn${e.id===G.atual?' on':''}" data-act="escolaEntrar" data-id="${e.id}"><span class="ti k-pl">${ic('door')}</span><span class="row-txt"><strong>${esc(e.nome)}</strong>${e.id===G.atual?'<span class="row-meta">escola atual</span>':''}</span></button>`).join('')}</div></div>`:''}
-    <div class="field"><span class="lbl">Meu avatar</span>${avPicker(u.avatar)}</div>
-    <button class="btn wide" data-act="contaAvatarSalvar">${ic('check')}Salvar avatar</button>
-    ${somCfgHTML()}
+    <button type="button" class="pf-op" data-act="pfAbre" data-id="avatar" aria-expanded="false" aria-controls="pfAvatar">${ic('users')}Editar avatar<span class="pf-seta">›</span></button>
+    <div class="pf-box" id="pfAvatar" hidden>${avPicker(u.avatar)}<button class="btn wide" data-act="contaAvatarSalvar">${ic('check')}Salvar avatar</button></div>
+    <button type="button" class="pf-op" data-act="pfAbre" data-id="sons" aria-expanded="false" aria-controls="pfSons">${ic('bell')}Sons<span class="pf-seta">›</span></button>
+    <div class="pf-box" id="pfSons" hidden>${somCfgHTML()}</div>
     ${botaoInstalar()}
     <button class="btn ghost wide" data-act="tutorial">Ver o tutorial de novo</button>
     <button class="btn wide" data-act="sair">${ic('out')}Trocar usuário / sair</button>
@@ -2532,6 +2541,10 @@ setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u){SOM.ul
   let c={};try{c={chat:chatNaoLidas(),avisos:avisosNovos().length,pais:perfil().agenda?pendPais():0,troca:!perfil().leitura&&plVencido()?1:0}}catch(e){return}
   const a=SOM.ult;SOM.ult=Object.assign({uid:u.id},c);if(!a||a.uid!==u.id)return;
   if(c.chat>a.chat||c.avisos>a.avisos||c.pais>a.pais||c.troca>a.troca)somAviso()},1500);
+
+Object.assign(actions,{
+  pfAbre:id=>{const box=$(id==='sons'?'#pfSons':'#pfAvatar'),bt=document.querySelector(`.pf-op[data-id="${id}"]`);if(!box)return;const abrir=box.hidden;box.hidden=!abrir;if(bt)bt.setAttribute('aria-expanded',String(abrir));if(abrir)setTimeout(()=>box.scrollIntoView({block:'nearest',behavior:'smooth'}),30)}
+});
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
