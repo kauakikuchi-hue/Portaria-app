@@ -868,7 +868,7 @@ function vAssumir(){
     ${dentro.length?`<div><span class="lbl">${dentro.length===1?'1 pessoa ainda está':dentro.length+' pessoas ainda estão'} na escola</span><div class="mini-hist">${dentro.map(v=>`<div><span>${esc(nomeCurto(pessoa(v.pid)||{}))}</span><span class="mono muted">desde ${hhmm(v.entrada)}</span></div>`).join('')}</div></div>`:'<p class="note">Ninguém dentro da escola agora.</p>'}
     ${kf.length?`<div class="alert warn">${ic('key')}<div><strong>${kf.length===1?'1 chave ainda retirada':kf.length+' chaves ainda retiradas'}</strong><p>${kf.map(m=>esc(kNome(m))+' com '+esc(primeiro(fNome(m)))).join(' · ')}</p></div></div>`:''}
     ${r&&r.obs?`<p class="note"><b>Observação de ${esc(pg.de)}:</b> ${esc(r.obs)}</p>`:''}
-    ${passagemCamposHTML('as',r?{carga:r.carga,cont:r.cont}:null)}<div class="field"><label for="asObs">Novidades ao assumir (opcional)</label><textarea id="asObs" placeholder="Em branco = sem novidades."></textarea></div><div class="alert ag">${ic('file')}<div style="min-width:0"><strong>Mensagem da passagem de posto</strong><p class="mono as-prev" id="asPrev">${esc(textoAssumo())}</p></div></div><button class="btn wa wide" data-act="assumirWa">${ic('chat')}Enviar no WhatsApp</button>
+    ${passagemCamposHTML('as',r?{carga:r.carga,cont:r.cont}:null)}<div class="field"><label for="asObs">Novidades ao assumir (opcional)</label><textarea id="asObs" placeholder="Em branco = sem novidades."></textarea></div><div class="alert ag">${ic('file')}<div style="min-width:0"><strong>Mensagem de quem assume o posto</strong><p class="mono as-prev" id="asPrev">${esc(textoAssumo())}</p></div></div><button class="btn wa wide" data-act="assumirWa">${ic('chat')}Enviar no WhatsApp</button>
     <label class="check"><input type="checkbox" id="assumeOk"><span>Confirmo que recebi o posto como está descrito acima.</span></label>
     <span class="err" id="assumeErr" hidden></span>
     <button class="btn wide" data-act="assumirConfirma">${ic('check')}Assumir posto</button>
@@ -2435,7 +2435,7 @@ function textoPasso(r,nomes){const tu=turnosDe(r).out;const nov=ocorrencias(r.in
   return L.join('\n')}
 function textoAssumo(){const me=usuarioAtual(),pg=passagemPara(me);if(!pg)return '';const r=(db.plantoes||[]).find(x=>x.id===pg.relId);if(!r)return '';
   const f=lerCampos('as',r.carga,r.cont),obs=(($('#asObs')||{}).value||'').trim();
-  return textoPasso(r,false)+'\n\n'+blocoPosto({verbo:'assumo',nome:primeiro(me.nome),qra:primeiro(r.resp||pg.de||''),turno:turnosDe(r).inn,carga:f.carga,cont:f.cont,nov:obs?[obs]:[]}).join('\n')}
+  return blocoPosto({verbo:'assumo',nome:primeiro(me.nome),qra:primeiro(r.resp||pg.de||''),turno:turnosDe(r).inn,carga:f.carga,cont:f.cont,nov:obs?[obs]:[]}).join('\n')}
 const _relTextoBase=relTexto;relTexto=function(c,nomes){return c&&c.tipo==='plantao'&&c.r&&Array.isArray(c.r.carga)?textoPasso(c.r,nomes):_relTextoBase(c,nomes)};
 const _ctxPlantaoBase=ctxPlantao;ctxPlantao=function(r){return Object.assign(_ctxPlantaoBase(r),{r})};
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(!t||!(t.name==='asCarga'||t.name==='asCont'||t.id==='asObs'))return;const pv=$('#asPrev');if(pv)pv.textContent=textoAssumo()}));
