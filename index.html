@@ -635,6 +635,42 @@ img.av{object-fit:cover;padding:0}
 .pf-box{display:grid;gap:12px;padding:12px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;margin-top:-17px;background:var(--sunk)}
 .pf-op[aria-expanded="true"]{border-radius:12px 12px 0 0}
 .khead .av-edit{border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
+
+/* ===== Central do Gestor ===== */
+.g-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.g-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+:root[data-layout="desktop"] .g-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.gcard{padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.gcard.edit{outline:2px dashed color-mix(in srgb,var(--brand) 55%,transparent);outline-offset:2px}
+.gc-h{display:flex;align-items:center;gap:8px;min-width:0}
+.gc-h h3{font-size:1rem;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc-h .ic{color:var(--brand)}
+.gc-big{font-family:var(--f-display);font-size:1.7rem;font-weight:800;line-height:1.1}
+.gc-sub{font-size:.85rem;color:var(--muted)}
+.gc-l{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:.88rem}
+.gc-l li{display:flex;justify-content:space-between;gap:8px;min-width:0}
+.gc-l li span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gc-l .ruim{color:var(--danger);font-weight:700}
+.gc-l .atn{color:#B45309;font-weight:700}
+.gbar{height:10px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.gbar i{display:block;height:100%;background:var(--brand);border-radius:999px}
+.gbar.ruim i{background:var(--danger)}
+.gc-ed{display:flex;gap:6px;flex-wrap:wrap}
+.gc-ed button{min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer}
+.g-form{display:grid;gap:10px}
+.g-row{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:8px;align-items:end}
+.g-row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.g-it{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.g-it:last-child{border-bottom:0}
+.g-it .t{min-width:0;display:grid}
+.g-it .t b{overflow:hidden;text-overflow:ellipsis}
+.g-it .t small{color:var(--muted)}
+.g-it .a{display:flex;gap:6px;flex:none}
+.g-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:.72rem;font-weight:700;background:var(--sunk);color:var(--muted)}
+.g-tag.ok{background:color-mix(in srgb,#16a34a 15%,var(--surface));color:#15803d}
+.g-tag.ruim{background:color-mix(in srgb,var(--danger) 15%,var(--surface));color:var(--danger)}
+.g-tag.atn{background:color-mix(in srgb,#f59e0b 18%,var(--surface));color:#B45309}
+@media (max-width:420px){.g-row{grid-template-columns:minmax(0,1fr) 92px}.g-row>*:last-child{grid-column:1/-1}.g-row3{grid-template-columns:minmax(0,1fr)}}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -654,8 +690,9 @@ const TURNOS_TXT={'12':'A cada 12 horas (06:00 e 18:00)','8':'A cada 8 horas (06
 const PERFIS={
   porteiro:{nome:'Porteiro',tabs:['inicio','chaves','historico','chat'],cpf:false,gerir:false},
   secretaria:{nome:'Secretaria',tabs:['agenda','inicio','chat'],cpf:false,gerir:false,leitura:true,agenda:true},
-  gestor:{nome:'Gestor',tabs:['inicio','agenda','chaves','historico','chat','config'],cpf:true,gerir:true,agenda:true},
-  admin:{nome:'Administrador',tabs:['inicio','agenda','chaves','historico','chat','config'],cpf:true,gerir:true,agenda:true}
+  gestor:{nome:'Gestor',tabs:['gestao','inicio','agenda','historico','chat','config'],cpf:true,gerir:true,agenda:true},
+  cozinha:{nome:'Cozinha',tabs:['chat'],cpf:false,gerir:false,leitura:true},
+  admin:{nome:'Administrador',tabs:['gestao','inicio','agenda','chaves','historico','chat','config'],cpf:true,gerir:true,agenda:true}
 };
 const LOGO_SP='';
 const CORES=['#F86000','#C2410C','#1C1917'];
@@ -787,7 +824,7 @@ function render(){
   const P=perfil();if(!P.tabs.includes(ui.tab))ui.tab=P.tabs[0];
   document.documentElement.style.setProperty('--brand',db.config.cor);
   document.documentElement.dataset.layout=layoutEf();
-  const views={chat:vChat,agenda:vAgenda,inicio:vInicio,chaves:vChaves,historico:vRegistros,hoje:vRegistros,relatorios:vRegistros,config:vConfig};
+  const views={gestao:vGestao,chat:vChat,agenda:vAgenda,inicio:vInicio,chaves:vChaves,historico:vRegistros,hoje:vRegistros,relatorios:vRegistros,config:vConfig};
   app.innerHTML=vChrome()+`<main class="wrap">${views[ui.tab]()}</main>`+dlAlunos();
   after();
 }
@@ -796,7 +833,7 @@ const horaBR=()=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',h
 function vChrome(){
   const c=db.config,P=perfil();
   const logo=c.logo?`<img class="logo" src="${c.logo}" alt="Logo da escola">`:`<div class="logo ph" aria-hidden="true">LOGO</div>`;
-  const T={chat:['Chat','chat'],inicio:['Portaria','door'],chaves:['Chaves','key'],historico:['Registros','list'],agenda:['Agenda','cal'],hoje:['Hoje','list'],relatorios:['Relatórios','chart'],config:['Ajustes','sliders']};  return `<div class="chrome"><header class="top"><div class="wrap bar">
+  const T={gestao:['Central','chart'],chat:['Chat','chat'],inicio:['Portaria','door'],chaves:['Chaves','key'],historico:['Registros','list'],agenda:['Agenda','cal'],hoje:['Hoje','list'],relatorios:['Relatórios','chart'],config:['Ajustes','sliders']};  return `<div class="chrome"><header class="top"><div class="wrap bar">
     <div class="brand">${linkSP(logo)}<div class="brand-txt"><strong>${esc(c.escola)}</strong><span>${esc(perfil().nome)} · ${esc(quem())}</span></div></div>
     <div class="bar-right"><time class="relogio" id="relogio" title="Horário de Brasília"><span>Brasília</span> <b id="relogioHora">${horaBR()}</b></time>${meuSetor()?`<button class="lay-btn" data-act="avisos" aria-label="Avisos do setor" title="Avisos do setor">${ic('bell')}${avisosNovos().length?`<i class="badge">${avisosNovos().length}</i>`:''}</button>`:''}<button class="lay-btn" data-act="layoutMenu" aria-label="Modo de tela" title="Modo de tela">${ic(layoutEf()==='desktop'?'monitor':'phone')}</button><button class="ubtn-top" data-act="contaMenu" aria-label="Conta: ${esc(quem())}">${avatar({nome:quem(),avatar:(usuarioAtual()||{}).avatar})}<span class="ut"><b>${esc(primeiro(quem()))}</b><small>${esc(P.nome)}</small></span></button></div>
   </div></header>
@@ -1630,7 +1667,7 @@ function waReu(x){const txt=x.status==='confirmada'?`Olá, ${primeiro(x.nome)}! 
   return `<a class="btn wa wide" href="https://wa.me/55${x.tel}?text=${encodeURIComponent(txt)}" target="_blank" rel="noopener">${ic('chat')}Avisar o responsável no WhatsApp</a>`}
 
 /* LOGIN DA EQUIPE E ESCOLAS */
-const PERFIL_NOME={porteiro:'Porteiro',secretaria:'Secretaria',gestor:'Gestor',admin:'Administrador'};
+const PERFIL_NOME={porteiro:'Porteiro',secretaria:'Secretaria',cozinha:'Cozinha',gestor:'Gestor',admin:'Administrador'};
 function vLogin(){
   const c=db.config,us=(db.usuarios||[]).filter(u=>u.ativo!==false),ads=G.admins||[];
   const logo=c.logo?`<img class="logo" src="${c.logo}" alt="" style="height:52px;width:auto;max-width:180px;background:none">`:`<div class="logo ph" style="width:56px;height:56px" aria-hidden="true">LOGO</div>`;
@@ -1687,7 +1724,7 @@ function escolasHTML(){
 }
 function abrirUsr(id){
   const me=usuarioAtual(),x=id==='new'?{nome:'',perfil:'porteiro',tel:'',ativo:true}:(db.usuarios||[]).find(u=>u.id===id);if(!x)return;
-  const ops=['porteiro','secretaria','gestor'].concat(me&&me.perfil==='admin'?['admin']:[]);
+  const ops=['porteiro','secretaria','cozinha','gestor'].concat(me&&me.perfil==='admin'?['admin']:[]);
   abrirSheet(`${head(id==='new'?'Nova pessoa da equipe':'Editar pessoa da equipe')}
     <div class="field"><label for="uNome">Nome</label><input id="uNome" autocapitalize="words" value="${esc(x.nomePendente?'':x.nome)}" placeholder="Pode ficar vazio se informar o CPF"></div>
     <div class="field"><label for="uCpf">CPF (opcional)</label><input id="uCpf" class="mono" inputmode="numeric" placeholder="000.000.000-00" value="${esc(x.cpf?maskInputCPF(x.cpf):'')}"></div>
@@ -2414,6 +2451,7 @@ const PRONTAS={
   porteiro:['Visitante aguardando na portaria.','Responsável aguardando na portaria para buscar aluno.','Entrega chegou na portaria.','A merenda chegou. Alguém da cozinha pode receber?','Prestador de serviço chegou.','Preciso de apoio na portaria.','Fazendo a ronda, volto em 10 minutos.','Portão fechado.'],
   secretaria:['Pode liberar a entrada, está autorizado.','Não liberar. Peça para aguardar, por favor.','Responsável vai buscar o aluno mais cedo hoje.','Reunião confirmada, pode encaminhar à secretaria.','Estou indo até a portaria.','Favor chamar o aluno na sala.','Documento recebido, obrigado(a).'],
   gestor:['Reunião da equipe hoje no fim do expediente.','Favor confirmar que recebeu esta mensagem.','Visita de fiscalização hoje. Mantenham tudo em ordem.','Registrem tudo no app, por favor.','Estou a caminho.','Chego em 10 minutos.','Bom trabalho, equipe!'],
+  cozinha:['A merenda está pronta.','Faltou um item da merenda, aviso o gestor.','Recebemos a entrega da merenda.','Precisamos de gás na cozinha.','Cardápio de hoje alterado.'],
   comum:['Ok, ciente.','Já vou.','Obrigado(a)!']};
 function chatProntas(){const u=usuarioAtual();const k=u?(u.perfil==='admin'?'gestor':u.perfil):'porteiro';return (PRONTAS[k]||PRONTAS.porteiro).concat(PRONTAS.comum)}
 /* Teclado do celular: a tela acompanha a área visível (Android e iPhone) */
@@ -2546,6 +2584,239 @@ setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u){SOM.ul
 Object.assign(actions,{
   pfAbre:id=>{const box=$(id==='sons'?'#pfSons':'#pfAvatar'),bt=document.querySelector(`.pf-op[data-id="${id}"]`);if(!box)return;const abrir=box.hidden;box.hidden=!abrir;if(bt)bt.setAttribute('aria-expanded',String(abrir));if(abrir)setTimeout(()=>box.scrollIntoView({block:'nearest',behavior:'smooth'}),30)}
 });
+
+/* ===== CENTRAL DO GESTOR (dashboard personalizável) ===== */
+const GCAT={verba:['Verba do mês','chart'],economia:['Economia','check'],compras:['Compras','file'],estoque:['Estoque','list'],infra:['Infraestrutura','alert'],venc:['Vencimentos','cal'],merenda:['Merenda','users'],portaria:['Portaria','door'],nota:['Anotação','file']};
+const GPAD=['verba','economia','compras','estoque','infra','venc','merenda','portaria'];
+function gPatch(){const g=db.gestor=db.gestor||{};if(!Array.isArray(g.cards))g.cards=GPAD.map(t=>({id:uid(),tipo:t,titulo:GCAT[t][0]}));
+  g.setores=g.setores||[];g.gastos=g.gastos||[];g.compras=g.compras||[];g.estoque=g.estoque||[];g.chamados=g.chamados||[];g.venc=g.venc||[];g.merenda=g.merenda||[];return g}
+const G_=()=>gPatch();
+const brl=v=>(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const mesKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+pad(d.getMonth()+1)};
+const diasAte=iso=>Math.ceil((new Date(iso+'T00:00:00').getTime()-hoje0())/864e5);
+const dBR=iso=>iso?iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(0,4):'';
+function gMes(){const m=mesKey(Date.now()),g=G_();const gastos=g.gastos.filter(x=>mesKey(x.t)===m);const verba=g.setores.reduce((a,x)=>a+(+x.valor||0),0),gasto=gastos.reduce((a,x)=>a+(+x.valor||0),0);
+  const d=new Date(),dia=d.getDate(),nd=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();return {m,gastos,verba,gasto,saldo:verba-gasto,prev:dia?gasto/dia*nd:gasto,porSetor:g.setores.map(st=>({...st,gasto:gastos.filter(x=>x.setor===st.nome).reduce((a,x)=>a+(+x.valor||0),0)}))}}
+const cotEsc=c=>(c.cotacoes||[])[c.esc]||{valor:0,forn:''};
+function econCompra(c){const vs=(c.cotacoes||[]).map(x=>+x.valor||0).filter(v=>v>0);if(vs.length<2)return 0;return Math.max(...vs)-(+cotEsc(c).valor||0)}
+function gEconomia(){const g=G_(),m=mesKey(Date.now()),a=String(new Date().getFullYear());const cs=g.compras.filter(c=>c.status!=='aprovar');
+  const mes=cs.filter(c=>mesKey(c.criado)===m),ano=cs.filter(c=>mesKey(c.criado).startsWith(a));return {mes:mes.reduce((s,c)=>s+econCompra(c),0),ano:ano.reduce((s,c)=>s+econCompra(c),0),lista:mes.filter(c=>econCompra(c)>0).sort((x,y)=>econCompra(y)-econCompra(x))}}
+const estDias=e=>(+e.consumo>0)?Math.floor((+e.qtd||0)/(+e.consumo)):Infinity;
+const estCritico=e=>(+e.qtd||0)<=(+e.min||0)||estDias(e)<=7;
+const comprasAtras=()=>G_().compras.filter(c=>c.status==='pedido'&&c.prev&&c.prev<hojeISO());
+/* ---------- cartões ---------- */
+function gCardBody(c){const g=G_();
+  if(c.tipo==='verba'){const v=gMes(),pc=v.verba?Math.min(100,Math.round(v.gasto/v.verba*100)):0,estoura=v.prev>v.verba&&v.verba>0;
+    return `<div><div class="gc-big">${brl(v.saldo)}</div><div class="gc-sub">disponível de ${brl(v.verba)} · gasto ${brl(v.gasto)}</div></div><div class="gbar${pc>=90?' ruim':''}"><i style="width:${pc}%"></i></div>
+      <ul class="gc-l">${v.porSetor.slice(0,5).map(st=>{const p2=+st.valor?Math.round(st.gasto/st.valor*100):0;return `<li><span>${esc(st.nome)}</span><span class="${p2>=100?'ruim':p2>=85?'atn':''}">${p2}%</span></li>`}).join('')||'<li><span>Cadastre a verba por setor.</span></li>'}</ul>
+      <div class="gc-sub${estoura?' ruim':''}">${estoura?'⚠️ ':''}Previsão para o fim do mês: <b>${brl(v.prev)}</b></div>`}
+  if(c.tipo==='economia'){const e=gEconomia();return `<div><div class="gc-big">${brl(e.mes)}</div><div class="gc-sub">economizados neste mês · ${brl(e.ano)} no ano</div></div>
+      <ul class="gc-l">${e.lista.slice(0,4).map(x=>`<li><span>${esc(x.item)}</span><span>${brl(econCompra(x))}</span></li>`).join('')||'<li><span>Lance compras com cotações para ver a economia.</span></li>'}</ul>`}
+  if(c.tipo==='compras'){const ap=g.compras.filter(x=>x.status==='aprovar'),pe=g.compras.filter(x=>x.status==='pedido'),at=comprasAtras();
+    return `<div class="gc-big">${ap.length+pe.length}</div><div class="gc-sub">${ap.length} para aprovar · ${pe.length} a receber${at.length?` · <b class="ruim">${at.length} atrasada(s)</b>`:''}</div>
+      <ul class="gc-l">${ap.concat(pe).slice(0,4).map(x=>`<li><span>${esc(x.item)}</span><span class="${x.status==='aprovar'?'atn':''}">${x.status==='aprovar'?'aprovar':x.prev?'chega '+dBR(x.prev).slice(0,5):'a receber'}</span></li>`).join('')||'<li><span>Nenhuma compra em andamento.</span></li>'}</ul>`}
+  if(c.tipo==='estoque'){const cr=g.estoque.filter(estCritico).sort((a,b)=>estDias(a)-estDias(b));
+    return `<div class="gc-big">${cr.length}</div><div class="gc-sub">${cr.length===1?'item precisa':'itens precisam'} de atenção · ${g.estoque.length} no estoque</div>
+      <ul class="gc-l">${cr.slice(0,5).map(e=>`<li><span>${esc(e.nome)}</span><span class="${estDias(e)<=3||(+e.qtd||0)<=(+e.min||0)?'ruim':'atn'}">${estDias(e)===Infinity?'abaixo do mínimo':'acaba em '+estDias(e)+(estDias(e)===1?' dia':' dias')}</span></li>`).join('')||'<li><span>Estoque em dia.</span></li>'}</ul>`}
+  if(c.tipo==='infra'){const ab=g.chamados.filter(x=>x.status!=='resolvido'),atr=ab.filter(x=>Date.now()-x.t>3*864e5);
+    return `<div class="gc-big">${ab.length}</div><div class="gc-sub">${ab.length===1?'problema aberto':'problemas abertos'}${atr.length?` · <b class="ruim">${atr.length} há mais de 3 dias</b>`:''}</div>
+      <ul class="gc-l">${ab.slice(0,4).map(x=>`<li><span>${esc(x.titulo)}</span><span class="${x.status==='andamento'?'':'atn'}">${x.status==='andamento'?'em andamento':'aberto'}</span></li>`).join('')||'<li><span>Nenhum problema aberto.</span></li>'}</ul>`}
+  if(c.tipo==='venc'){const vs=g.venc.slice().sort((a,b)=>a.data.localeCompare(b.data)).filter(v=>diasAte(v.data)>=-30);
+    return `<ul class="gc-l">${vs.slice(0,5).map(v=>{const d=diasAte(v.data);return `<li><span>${esc(v.nome)}</span><span class="${d<0||d<=15?'ruim':d<=45?'atn':''}">${d<0?'venceu há '+(-d)+'d':d===0?'vence hoje':'em '+d+' dias'}</span></li>`}).join('')||'<li><span>Cadastre extintores, dedetização, contratos…</span></li>'}</ul>`}
+  if(c.tipo==='merenda'){const ms=g.merenda.slice().sort((a,b)=>b.dia.localeCompare(a.dia)).slice(0,5),h=ms.find(x=>x.dia===hojeISO());const tot=ms.reduce((a,x)=>a+(+x.refeicoes||0),0),cus=ms.reduce((a,x)=>a+(+x.custo||0),0),sob=ms.reduce((a,x)=>a+(+x.sobra||0),0);
+    return `<div><div class="gc-big">${h?h.refeicoes:'—'}</div><div class="gc-sub">refeições hoje · média ${ms.length?Math.round(tot/ms.length):0} por dia</div></div>
+      <ul class="gc-l"><li><span>Custo por refeição</span><span>${tot?brl(cus/tot):'—'}</span></li><li><span>Sobras (últimos ${ms.length} dias)</span><span>${sob.toFixed(1).replace('.',',')} kg</span></li></ul>`}
+  if(c.tipo==='portaria'){const dentro=db.visitas.filter(v=>!v.saida).length,hoje=db.visitas.filter(v=>v.entrada>=hoje0()).length,oc=ocorrencias(hoje0(),Date.now()+1).length,kf=kFora().length;
+    return `<ul class="gc-l"><li><span>Na escola agora</span><span>${dentro}</span></li><li><span>Entradas hoje</span><span>${hoje}</span></li><li><span>Ocorrências hoje</span><span class="${oc?'atn':''}">${oc}</span></li><li><span>Chaves fora</span><span>${kf}</span></li><li><span>Plantão</span><span>${esc(primeiro(db.plantao.resp||'—'))}</span></li></ul>`}
+  if(c.tipo==='nota')return `<p style="margin:0;white-space:pre-wrap">${esc(c.texto||'Toque em Abrir para escrever.')}</p>`;
+  return ''}
+function gCardHTML(c,i,n){const ed=ui.gEdit;
+  return `<section class="panel gcard${ed?' edit':''}" aria-label="${esc(c.titulo)}"><div class="gc-h">${ic(GCAT[c.tipo]?GCAT[c.tipo][1]:'file')}<h3>${esc(c.titulo)}</h3>${ed?'':`<button class="btn ghost sm" data-act="gAbrir" data-id="${c.id}">Abrir</button>`}</div>
+    ${gCardBody(c)}
+    ${ed?`<div class="gc-ed"><button data-act="gSobe" data-id="${c.id}"${i?'':' disabled'} aria-label="Subir">↑</button><button data-act="gDesce" data-id="${c.id}"${i<n-1?'':' disabled'} aria-label="Descer">↓</button><button data-act="gRenomear" data-id="${c.id}">✎ Renomear</button><button data-act="gTirar" data-id="${c.id}">${ui.gTirar===c.id?'Toque de novo':'✕ Retirar'}</button></div>`:''}</section>`}
+function vGestao(){const g=G_(),u=usuarioAtual();const cs=g.cards;
+  return `<section style="display:grid;gap:16px"><div class="g-top"><div><h2 style="font-size:1.35rem">Central do Gestor</h2><p class="note">${ui.gEdit?'Mude a ordem, renomeie, retire ou adicione caixas. Fica salvo para você.':'Seu painel de verba, compras, estoque e infraestrutura.'}</p></div>
+    <div class="chips">${ui.gEdit?`<button class="btn sm" data-act="gAdd">${ic('plus')}Adicionar caixa</button><button class="btn ghost sm" data-act="gPadrao">${ui.gPadrao?'Toque de novo':'Restaurar padrão'}</button><button class="btn sm" data-act="gEditar">${ic('check')}Pronto</button>`:`<button class="btn out sm" data-act="gEditar">${ic('sliders')}Personalizar</button>`}</div></div>
+    <div class="g-grid">${cs.map((c,i)=>gCardHTML(c,i,cs.length)).join('')||'<p class="empty">Nenhuma caixa. Toque em Personalizar → Adicionar caixa.</p>'}</div></section>`}
+/* ---------- telas de detalhe ---------- */
+const gCard=id=>G_().cards.find(c=>c.id===id);
+const setOpts=sel=>G_().setores.map(s=>`<option${s.nome===sel?' selected':''}>${esc(s.nome)}</option>`).join('');
+function gDetalhe(tipo,cid){const g=G_();
+  if(tipo==='verba'){const v=gMes();abrirSheet(`${head('Verba do mês')}
+    <p class="note">Coloque quanto cada setor pode gastar por mês. Pode criar, renomear e retirar setores.</p>
+    <div class="g-form" id="gSet">${g.setores.map((st,i)=>`<div class="g-row"><div class="field"><label>Setor</label><input data-k="nome" data-i="${i}" value="${esc(st.nome)}"></div><div class="field"><label>R$ por mês</label><input data-k="valor" data-i="${i}" type="number" inputmode="decimal" min="0" step="0.01" value="${+st.valor||0}"></div><button class="icon-btn" data-act="gSetDel" data-id="${i}" aria-label="Retirar setor">${ic('x')}</button></div>`).join('')}</div>
+    <div class="rel-actions"><button class="btn ghost" data-act="gSetAdd">${ic('plus')}Novo setor</button><button class="btn" data-act="gSetSalvar">${ic('check')}Salvar verba</button></div>
+    <div class="sec-head" style="margin:6px 0 0"><h3 style="margin:0">Gastos de ${new Date().toLocaleDateString('pt-BR',{month:'long'})}</h3><b>${brl(v.gasto)}</b></div>
+    <div class="g-form"><div class="field"><label for="gGDesc">Novo gasto</label><input id="gGDesc" placeholder="Ex.: conserto do portão"></div><div class="g-row3"><div class="field"><label for="gGSet">Setor</label><select id="gGSet">${setOpts()}</select></div><div class="field"><label for="gGVal">Valor (R$)</label><input id="gGVal" type="number" inputmode="decimal" min="0" step="0.01"></div><div class="field"><label for="gGFor">Fornecedor</label><input id="gGFor" placeholder="opcional"></div></div><button class="btn" data-act="gGastoAdd">${ic('plus')}Lançar gasto</button></div>
+    <div class="list">${v.gastos.slice().sort((a,b)=>b.t-a.t).map(x=>`<div class="g-it"><span class="t"><b>${esc(x.desc)}</b><small>${dataBR(x.t)} · ${esc(x.setor)}${x.forn?' · '+esc(x.forn):''}${x.compra?' · compra':''}</small></span><b>${brl(x.valor)}</b></div>`).join('')||'<p class="empty">Nenhum gasto neste mês.</p>'}</div>`,'Verba');return}
+  if(tipo==='economia'){const e=gEconomia();abrirSheet(`${head('Economia')}
+    <p class="note">O app compara as cotações de cada compra: economia = orçamento mais caro − orçamento escolhido.</p>
+    <div class="mini-tiles"><div><b>${brl(e.mes)}</b><span>Neste mês</span></div><div><b>${brl(e.ano)}</b><span>No ano</span></div></div>
+    <div class="list">${e.lista.map(c=>`<div class="g-it"><span class="t"><b>${esc(c.item)}</b><small>${esc(cotEsc(c).forn)} · ${(c.cotacoes||[]).length} cotações · ${dataBR(c.criado)}</small></span><b>${brl(econCompra(c))}</b></div>`).join('')||'<p class="empty">Nenhuma economia ainda neste mês.</p>'}</div>`,'Economia');return}
+  if(tipo==='compras'){const st={aprovar:['Para aprovar','atn'],pedido:['A receber',''],recebido:['Recebida','ok']};const ls=g.compras.slice().sort((a,b)=>(a.status==='recebido')-(b.status==='recebido')||b.criado-a.criado);
+    abrirSheet(`${head('Compras')}<button class="btn" data-act="gCompraNova">${ic('plus')}Nova compra com cotação</button>
+    <div class="list">${ls.map(c=>{const e=cotEsc(c),atr=c.status==='pedido'&&c.prev&&c.prev<hojeISO();return `<div class="g-it"><span class="t"><b>${esc(c.item)} <span class="g-tag ${atr?'ruim':st[c.status][1]}">${atr?'Atrasada':st[c.status][0]}</span></b><small>${c.qtd?esc(c.qtd+' '+(c.un||'')):''} · ${esc(c.setor||'')} · ${esc(e.forn)} ${brl(e.valor)}${econCompra(c)?' · economia '+brl(econCompra(c)):''}${c.prev&&c.status==='pedido'?' · chega '+dBR(c.prev):''}</small></span><span class="a">${c.status==='aprovar'?`<button class="btn sm" data-act="gCompraAprovar" data-id="${c.id}">Aprovar</button>`:c.status==='pedido'?`<button class="btn sm" data-act="gCompraReceber" data-id="${c.id}">Recebido</button>`:''}</span></div>`}).join('')||'<p class="empty">Nenhuma compra.</p>'}</div>`,'Compras');return}
+  if(tipo==='estoque'){const ls=g.estoque.slice().sort((a,b)=>estDias(a)-estDias(b));
+    abrirSheet(`${head('Estoque')}<p class="note">"Acaba em" usa o consumo médio por dia. Toque no item para editar.</p><button class="btn" data-act="gEstItem" data-id="new">${ic('plus')}Novo item</button>
+    <div class="list">${ls.map(e=>{const d=estDias(e),cr=estCritico(e);return `<div class="g-it"><button class="t" style="border:0;background:none;text-align:left;cursor:pointer;color:inherit;padding:0" data-act="gEstItem" data-id="${e.id}"><b>${esc(e.nome)} ${cr?'<span class="g-tag ruim">repor</span>':''}</b><small>${esc(e.setor||'')} · ${(+e.qtd||0).toLocaleString('pt-BR')} ${esc(e.un||'')} · mín. ${e.min||0} · ${d===Infinity?'sem consumo médio':'acaba em '+d+' dias'}</small></button><span class="a">${cr?`<button class="btn sm out" data-act="gEstPedir" data-id="${e.id}">Pedir</button>`:''}</span></div>`}).join('')||'<p class="empty">Nenhum item.</p>'}</div>`,'Estoque');return}
+  if(tipo==='infra'){const ls=g.chamados.slice().sort((a,b)=>(a.status==='resolvido')-(b.status==='resolvido')||b.t-a.t);const S={aberto:['Aberto','atn'],andamento:['Em andamento',''],resolvido:['Resolvido','ok']};
+    abrirSheet(`${head('Infraestrutura')}<div class="g-form"><div class="field"><label for="gChT">Novo problema</label><input id="gChT" placeholder="Ex.: torneira vazando no banheiro"></div><div class="g-row3"><div class="field"><label for="gChL">Local</label><input id="gChL" placeholder="Ex.: Banheiro 2º andar"></div><div class="field"><label for="gChTp">Tipo</label><select id="gChTp">${['Hidráulica','Elétrica','Estrutura','Limpeza','Segurança','Outros'].map(x=>`<option>${x}</option>`).join('')}</select></div><div style="display:flex;align-items:end"><button class="btn wide" data-act="gChAdd">${ic('plus')}Registrar</button></div></div></div>
+    <div class="list">${ls.map(c=>`<div class="g-it"><span class="t"><b>${esc(c.titulo)} <span class="g-tag ${S[c.status][1]}">${S[c.status][0]}</span></b><small>${esc(c.local||'')} · ${esc(c.tipo||'')} · ${dataBR(c.t)}${c.status==='resolvido'&&c.fim?' · resolvido em '+dur(c.fim-c.t):' · há '+dur(Date.now()-c.t)}</small></span><span class="a">${c.status!=='resolvido'?`<button class="btn sm${c.status==='aberto'?' out':''}" data-act="gChAvanca" data-id="${c.id}">${c.status==='aberto'?'Iniciar':'Resolvido'}</button>`:''}</span></div>`).join('')||'<p class="empty">Nenhum problema.</p>'}</div>`,'Infraestrutura');return}
+  if(tipo==='venc'){const ls=g.venc.slice().sort((a,b)=>a.data.localeCompare(b.data));
+    abrirSheet(`${head('Vencimentos')}<p class="note">Extintores, dedetização, limpeza da caixa d'água, AVCB, contratos… O app avisa quando estiver perto.</p>
+    <div class="g-row"><div class="field"><label for="gVN">Nome</label><input id="gVN" placeholder="Ex.: Recarga dos extintores"></div><div class="field"><label for="gVD">Vence em</label><input id="gVD" type="date"></div><button class="btn" data-act="gVencAdd">${ic('plus')}Adicionar</button></div>
+    <div class="list">${ls.map(v=>{const d=diasAte(v.data);return `<div class="g-it"><span class="t"><b>${esc(v.nome)}</b><small>${dBR(v.data)} · ${d<0?'venceu há '+(-d)+' dias':d===0?'vence hoje':'faltam '+d+' dias'}</small></span><span class="a"><span class="g-tag ${d<=15?'ruim':d<=45?'atn':'ok'}">${d<=15?'urgente':d<=45?'em breve':'ok'}</span><button class="icon-btn sm" data-act="gVencDel" data-id="${v.id}" aria-label="Retirar">${ic('x')}</button></span></div>`}).join('')||'<p class="empty">Nada cadastrado.</p>'}</div>`,'Vencimentos');return}
+  if(tipo==='merenda'){const ls=g.merenda.slice().sort((a,b)=>b.dia.localeCompare(a.dia));
+    abrirSheet(`${head('Merenda')}<div class="g-form"><div class="g-row3"><div class="field"><label for="gMR">Refeições hoje</label><input id="gMR" type="number" inputmode="numeric" min="0"></div><div class="field"><label for="gMS">Sobra (kg)</label><input id="gMS" type="number" inputmode="decimal" min="0" step="0.1"></div><div class="field"><label for="gMC">Custo do dia (R$)</label><input id="gMC" type="number" inputmode="decimal" min="0" step="0.01"></div></div><button class="btn" data-act="gMerAdd">${ic('check')}Salvar dia de hoje</button></div>
+    <div class="list">${ls.map(x=>`<div class="g-it"><span class="t"><b>${dBR(x.dia)}</b><small>${x.refeicoes} refeições · sobra ${String(x.sobra||0).replace('.',',')} kg</small></span><b>${x.refeicoes?brl((+x.custo||0)/x.refeicoes)+'/ref.':'—'}</b></div>`).join('')||'<p class="empty">Nenhum dia registrado.</p>'}</div>`,'Merenda');return}
+  if(tipo==='portaria'){ui.tab='inicio';render();window.scrollTo(0,0);return}
+  if(tipo==='nota'){const c=gCard(cid);abrirSheet(`${head(esc(c.titulo))}<div class="field"><textarea id="gNota" style="min-height:180px">${esc(c.texto||'')}</textarea></div><button class="btn wide" data-act="gNotaSalvar" data-id="${c.id}">${ic('check')}Salvar</button>`,'Anotação');return}}
+function gEstForm(id,dados){const g=G_(),e=id&&id!=='new'?g.estoque.find(x=>x.id===id):Object.assign({nome:'',setor:(g.setores[0]||{}).nome||'',un:'un',qtd:0,min:0,consumo:0,preco:0},dados||{});if(!e)return;
+  abrirSheet(`${head(id==='new'?'Novo item':'Editar item')}<div class="g-form"><div class="field"><label for="eN">Nome</label><input id="eN" value="${esc(e.nome)}"></div>
+    <div class="g-row3"><div class="field"><label for="eS">Setor</label><select id="eS">${setOpts(e.setor)}</select></div><div class="field"><label for="eU">Unidade</label><input id="eU" value="${esc(e.un||'')}" placeholder="kg, un, L"></div><div class="field"><label for="eP">Preço (R$/un.)</label><input id="eP" type="number" inputmode="decimal" step="0.01" value="${+e.preco||0}"></div></div>
+    <div class="g-row3"><div class="field"><label for="eQ">Quantidade</label><input id="eQ" type="number" inputmode="decimal" value="${+e.qtd||0}"></div><div class="field"><label for="eM">Mínimo</label><input id="eM" type="number" inputmode="decimal" value="${+e.min||0}"></div><div class="field"><label for="eC">Consumo/dia</label><input id="eC" type="number" inputmode="decimal" step="0.1" value="${+e.consumo||0}"></div></div>
+    <div class="rel-actions"><button class="btn" data-act="gEstSalvar" data-id="${id}">${ic('check')}Salvar</button>${id!=='new'?`<button class="btn ghost" data-act="gEstDel" data-id="${id}">${ui.gEstDel===id?'Toque de novo para retirar':'Retirar item'}</button>`:''}</div></div>`,'Item do estoque')}
+function gCompraForm(pre){const g=G_(),c=Object.assign({item:'',setor:(g.setores[0]||{}).nome||'',qtd:'',un:''},pre||{});
+  abrirSheet(`${head('Nova compra')}<div class="g-form"><div class="field"><label for="cI">O que comprar</label><input id="cI" value="${esc(c.item)}" placeholder="Ex.: Arroz tipo 1"></div>
+    <div class="g-row3"><div class="field"><label for="cS">Setor</label><select id="cS">${setOpts(c.setor)}</select></div><div class="field"><label for="cQ">Quantidade</label><input id="cQ" value="${esc(c.qtd)}" inputmode="decimal"></div><div class="field"><label for="cU">Unidade</label><input id="cU" value="${esc(c.un)}" placeholder="kg, un"></div></div>
+    <span class="lbl">Cotações (até 3) — o app escolhe a mais barata</span>
+    ${[0,1,2].map(i=>`<div class="g-row"><div class="field"><input id="cF${i}" placeholder="Fornecedor ${i+1}" aria-label="Fornecedor ${i+1}"></div><div class="field"><input id="cV${i}" type="number" inputmode="decimal" step="0.01" placeholder="R$ total" aria-label="Valor ${i+1}"></div><span></span></div>`).join('')}
+    <div class="field"><label for="cP">Previsão de entrega</label><input id="cP" type="date"></div><span class="err" id="cErr" hidden></span>
+    <button class="btn wide" data-act="gCompraSalvar">${ic('check')}Salvar (vai para aprovação)</button></div>`,'Nova compra')}
+function gRedes(){const y=window.scrollY;render();window.scrollTo(0,y)}
+Object.assign(actions,{
+  gEditar:()=>{ui.gEdit=!ui.gEdit;ui.gTirar=null;ui.gPadrao=false;gRedes()},
+  gSobe:id=>{const cs=G_().cards,i=cs.findIndex(c=>c.id===id);if(i>0){[cs[i-1],cs[i]]=[cs[i],cs[i-1]];save();gRedes()}},
+  gDesce:id=>{const cs=G_().cards,i=cs.findIndex(c=>c.id===id);if(i>=0&&i<cs.length-1){[cs[i+1],cs[i]]=[cs[i],cs[i+1]];save();gRedes()}},
+  gTirar:id=>{if(ui.gTirar!==id){ui.gTirar=id;gRedes();return}const g=G_();g.cards=g.cards.filter(c=>c.id!==id);ui.gTirar=null;save();gRedes();toast('Caixa retirada. Os dados continuam guardados.')},
+  gRenomear:id=>{const c=gCard(id);if(!c)return;abrirSheet(`${head('Renomear caixa')}<div class="field"><label for="gNome">Nome</label><input id="gNome" value="${esc(c.titulo)}" maxlength="40"></div><button class="btn wide" data-act="gRenSalvar" data-id="${id}">${ic('check')}Salvar</button>`,'Renomear');setTimeout(()=>{const i=$('#gNome');i&&i.select()},60)},
+  gRenSalvar:id=>{const c=gCard(id),v=(($('#gNome')||{}).value||'').trim();if(!c||!v)return;c.titulo=v;save();fecharSheet();gRedes()},
+  gAdd:()=>{const tem=new Set(G_().cards.map(c=>c.tipo));const ops=Object.keys(GCAT).filter(t=>t==='nota'||!tem.has(t));
+    abrirSheet(`${head('Adicionar caixa')}<div class="chat-pick">${ops.map(t=>`<button class="chat-pessoa" data-act="gAddTipo" data-id="${t}">${ic(GCAT[t][1])}<span><b>${GCAT[t][0]}</b><small>${t==='nota'?'Uma caixa livre para você escrever o que quiser':'Volta para o painel com os dados de sempre'}</small></span></button>`).join('')}</div>`,'Adicionar caixa')},
+  gAddTipo:t=>{G_().cards.push({id:uid(),tipo:t,titulo:t==='nota'?'Minha anotação':GCAT[t][0],texto:''});save();fecharSheet();gRedes();toast('Caixa adicionada no fim do painel.')},
+  gPadrao:()=>{if(!ui.gPadrao){ui.gPadrao=true;gRedes();return}const g=G_();g.cards=GPAD.map(t=>({id:uid(),tipo:t,titulo:GCAT[t][0]}));ui.gPadrao=false;save();gRedes();toast('Painel voltou ao padrão.')},
+  gAbrir:id=>{const c=gCard(id);if(c)gDetalhe(c.tipo,id)},
+  gSetAdd:()=>{G_().setores.push({id:uid(),nome:'Novo setor',valor:0});gDetalhe('verba')},
+  gSetDel:i=>{G_().setores.splice(+i,1);save();gDetalhe('verba');gRedes()},
+  gSetSalvar:()=>{const g=G_();document.querySelectorAll('#gSet input').forEach(x=>{const st=g.setores[+x.dataset.i];if(!st)return;if(x.dataset.k==='nome'){const nv=x.value.trim()||st.nome;if(nv!==st.nome){g.gastos.forEach(q=>{if(q.setor===st.nome)q.setor=nv});g.estoque.forEach(q=>{if(q.setor===st.nome)q.setor=nv});g.compras.forEach(q=>{if(q.setor===st.nome)q.setor=nv})}st.nome=nv}else st.valor=Math.max(0,parseFloat(x.value)||0)});save();gDetalhe('verba');gRedes();toast('Verba salva.')},
+  gGastoAdd:()=>{const d=$('#gGDesc').value.trim(),v=parseFloat($('#gGVal').value);if(!d||!(v>0)){toast('Escreva o gasto e o valor.');return}G_().gastos.push({id:uid(),t:Date.now(),desc:d,setor:$('#gGSet').value,valor:v,forn:$('#gGFor').value.trim()});save();gDetalhe('verba');gRedes();toast('Gasto lançado.')},
+  gCompraNova:()=>gCompraForm(),
+  gCompraSalvar:()=>{const item=$('#cI').value.trim(),err=$('#cErr');const cot=[0,1,2].map(i=>({forn:$('#cF'+i).value.trim(),valor:parseFloat($('#cV'+i).value)})).filter(x=>x.valor>0).map(x=>({forn:x.forn||'Fornecedor',valor:x.valor}));
+    if(!item||!cot.length){err.textContent='Escreva o item e pelo menos um orçamento.';err.hidden=false;return}let esc_=0;cot.forEach((x,i)=>{if(x.valor<cot[esc_].valor)esc_=i});
+    G_().compras.push({id:uid(),item,setor:$('#cS').value,qtd:$('#cQ').value.trim(),un:$('#cU').value.trim(),cotacoes:cot,esc:esc_,status:'aprovar',criado:Date.now(),prev:$('#cP').value||''});save();gDetalhe('compras');gRedes();toast(cot.length>1?'Compra salva. Economia de '+brl(Math.max(...cot.map(x=>x.valor))-cot[esc_].valor)+' com a cotação.':'Compra salva.')},
+  gCompraAprovar:id=>{const c=G_().compras.find(x=>x.id===id);if(!c)return;c.status='pedido';c.aprovado=Date.now();audit('Aprovou compra',c.item);save();gDetalhe('compras');gRedes()},
+  gCompraReceber:id=>{const g=G_(),c=g.compras.find(x=>x.id===id);if(!c)return;c.status='recebido';c.recebido=Date.now();const e=cotEsc(c);g.gastos.push({id:uid(),t:Date.now(),desc:c.item,setor:c.setor,valor:+e.valor||0,forn:e.forn,compra:c.id});
+    const it=g.estoque.find(x=>norm(x.nome)===norm(c.item));if(it&&parseFloat(c.qtd)>0)it.qtd=(+it.qtd||0)+parseFloat(c.qtd);save();gDetalhe('compras');gRedes();toast('Recebida. Gasto lançado'+(it?' e estoque atualizado.':'.'))},
+  gEstItem:id=>{ui.gEstDel=null;gEstForm(id)},
+  gEstSalvar:id=>{const g=G_(),n=$('#eN').value.trim();if(!n){$('#eN').focus();return}const d={nome:n,setor:$('#eS').value,un:$('#eU').value.trim(),preco:parseFloat($('#eP').value)||0,qtd:parseFloat($('#eQ').value)||0,min:parseFloat($('#eM').value)||0,consumo:parseFloat($('#eC').value)||0};
+    if(id==='new')g.estoque.push({id:uid(),...d});else Object.assign(g.estoque.find(x=>x.id===id)||{},d);save();gDetalhe('estoque');gRedes()},
+  gEstDel:id=>{if(ui.gEstDel!==id){ui.gEstDel=id;gEstForm(id);return}const g=G_();g.estoque=g.estoque.filter(x=>x.id!==id);ui.gEstDel=null;save();gDetalhe('estoque');gRedes()},
+  gEstPedir:id=>{const e=G_().estoque.find(x=>x.id===id);if(!e)return;const falta=Math.max((+e.min||0)*2,(+e.consumo||0)*20)-(+e.qtd||0);gCompraForm({item:e.nome,setor:e.setor,qtd:String(Math.max(1,Math.ceil(falta))),un:e.un})},
+  gChAdd:()=>{const t=$('#gChT').value.trim();if(!t){$('#gChT').focus();return}G_().chamados.push({id:uid(),titulo:t,local:$('#gChL').value.trim(),tipo:$('#gChTp').value,status:'aberto',t:Date.now(),por:quem()});save();gDetalhe('infra');gRedes();toast('Problema registrado.')},
+  gChAvanca:id=>{const c=G_().chamados.find(x=>x.id===id);if(!c)return;if(c.status==='aberto')c.status='andamento';else{c.status='resolvido';c.fim=Date.now()}save();gDetalhe('infra');gRedes()},
+  gVencAdd:()=>{const n=$('#gVN').value.trim(),d=$('#gVD').value;if(!n||!d){toast('Preencha o nome e a data.');return}G_().venc.push({id:uid(),nome:n,data:d});save();gDetalhe('venc');gRedes()},
+  gVencDel:id=>{const g=G_();g.venc=g.venc.filter(x=>x.id!==id);save();gDetalhe('venc');gRedes()},
+  gMerAdd:()=>{const r=parseInt($('#gMR').value,10);if(!(r>=0)){toast('Informe as refeições.');return}const g=G_(),h=hojeISO();g.merenda=g.merenda.filter(x=>x.dia!==h);g.merenda.push({dia:h,refeicoes:r,sobra:parseFloat($('#gMS').value)||0,custo:parseFloat($('#gMC').value)||0});save();gDetalhe('merenda');gRedes();toast('Dia salvo.')},
+  gNotaSalvar:id=>{const c=gCard(id);if(!c)return;c.texto=$('#gNota').value;save();fecharSheet();gRedes()}
+});
+
+/* ===== DEMONSTRAÇÃO: simula uma escola funcionando (dados inventados) ===== */
+function demoSeed(){
+  if(db.config.demo1)return false;
+  let sd=20261018;const rnd=()=>{sd=(sd*1103515245+12345)%2147483648;return sd/2147483648};const ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));const pick=a=>a[Math.floor(rnd()*a.length)];
+  const now=Date.now(),D=864e5,H=36e5,M=6e4;const dia0=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
+  db.config.turno='12';delete db.config.horarios;
+  ['Secretaria','Coordenação/Direção','Manutenção/Cozinha'].forEach(d=>{if(!(db.config.destinos||[]).includes(d))db.config.destinos.push(d)});
+  /* equipe */
+  const EQ=[['Ricardo Almeida','porteiro','a01',''],['Paulo Henrique Santos','porteiro','a08',''],['Marcelo Oliveira','porteiro','a12',''],['Fábio Rocha','porteiro','a19',''],
+    ['Sérgio Martins','gestor','a37','Coordenação/Direção'],['Aparecida Ferreira','cozinha','a20','Manutenção/Cozinha'],['Lúcia Mendes','cozinha','a40','Manutenção/Cozinha'],
+    ['Juliana Costa','secretaria','a03','Secretaria'],['Patrícia Lima','secretaria','a17','Secretaria'],['Fernanda Souza','secretaria','a24','Secretaria'],['Camila Ribeiro','secretaria','a36','Secretaria']];
+  const U={};EQ.forEach(([nome,perfil,avatar,setor])=>{let u=(db.usuarios||[]).find(x=>norm(x.nome)===norm(nome));if(!u){u={id:uid(),nome,login:loginLivre(slugLogin(nome)),pin:'1234',perfil,setor,tel:'',cpf:'',avatar,ativo:true,trocarSenha:false,criadoEm:now};db.usuarios.push(u)}db.tutorial[u.id]=1;U[nome]=u});
+  if(!(G.admins||[]).length){G.admins=[{id:uid(),nome:'Administrador',login:'admin',pin:'1234'}];saveG()}
+  const vig=t=>{const d=new Date(t),h=d.getHours(),idx=Math.round(dia0(t-(h<6?D:0))/D);return h>=6&&h<18?(idx%2?U['Paulo Henrique Santos']:U['Ricardo Almeida']):(idx%2?U['Fábio Rocha']:U['Marcelo Oliveira'])};
+  /* chaves e funcionários */
+  ['Chave secretaria','Chave portão cadeirantes','Chave portão quadra 02','Chave abrigo de gás','Chave portão acesso pátio','Chave catracas','Molho de chaves T.I.','Molho de chaves'].forEach(n=>{if(!db.chaves.some(k=>norm(k.nome)===norm(n)))db.chaves.push({id:uid(),nome:n,local:'Portaria',obs:''})});
+  const FUN=[['Carlos Mendes','Manutenção'],['Rosana Alves','Limpeza'],['Eduardo Lima','Professor'],['Marta Silva','Professora'],['Bruno Reis','Técnico de T.I.']].map(([nome,funcao])=>{let f=db.funcionarios.find(x=>norm(x.nome)===norm(nome));if(!f){f={id:uid(),nome,funcao,tel:''};db.funcionarios.push(f)}return f});
+  /* alunos e pessoas */
+  const TUR=['6º A','6º B','7º A','7º B','8º A','8º B','9º A','9º B','1º EM','2º EM','3º EM'];
+  const AL=['Miguel Souza','Helena Oliveira','Arthur Lima','Alice Santos','Heitor Pereira','Laura Costa','Theo Rodrigues','Manuela Alves','Davi Ferreira','Valentina Gomes','Gael Ribeiro','Sophia Martins','Bernardo Carvalho','Isabella Rocha','Samuel Araújo','Luísa Barbosa','Pedro Henrique Dias','Lorena Teixeira','Lucas Moreira','Cecília Mendes','Gabriel Nunes','Maria Clara Pinto','Enzo Cardoso','Júlia Freitas','Matheus Batista','Beatriz Ramos','Rafael Castro','Mariana Lopes','Daniel Monteiro','Yasmin Correia'].map((nome,i)=>({nome,turma:TUR[i%TUR.length]}));
+  AL.forEach(a=>{if(!db.alunos.some(x=>norm(x.nome)===norm(a.nome)))db.alunos.push(a)});
+  const mk=(nome,tipo,extra)=>{let p_=db.pessoas.find(x=>norm(x.nome)===norm(nome));if(!p_){p_={id:uid(),nome,cpf:mkCPF(String(ri(100000000,999999999))),tel:'129'+ri(10000000,99999999),tipo,empresa:'',placa:'',alunos:[],foto:'',alerta:null,criadoEm:now-8*D,...(extra||{})};db.pessoas.push(p_)}return p_};
+  const RESP=['Adriana Souza','Marcos Oliveira','Simone Lima','Rogério Santos','Tatiane Pereira','Alexandre Costa','Vanessa Rodrigues','Cláudio Alves','Elaine Ferreira','Fernando Gomes','Kátia Ribeiro','Wagner Martins','Priscila Carvalho','Anderson Rocha','Débora Araújo'].map((n,i)=>mk(n,'responsavel',{alunos:[AL[i*2%AL.length],AL[(i*2+1)%AL.length]].slice(0,1+(i%2))}));
+  const VIS=['Renato Duarte','Silvana Prado','Jorge Antunes','Mônica Brito','Leonardo Faria','Cristina Matos','Rodrigo Pacheco','Sandra Vieira'].map(n=>mk(n,'visitante'));
+  const PRE=[['Edson Moura','Gás Vale Distribuidora','FKT-2B31'],['Jefferson Lima','Clima Frio Ar-condicionado','EJR-8C12'],['Valdir Santos','Hidráulica São José','DPL-4A77'],['Rafael Nogueira','Dedetizadora Vale Limpo','GHT-1D05'],['Antônio Reis','Distribuidora Merenda Boa','BRA-3E44'],['Wellington Cruz','Elétrica Paraíba','CJK-9F20']].map(([n,e,pl])=>mk(n,'prestador',{empresa:e,placa:pl}));
+  if(!db.pessoas.some(x=>x.alerta))mk('Rubens Teixeira','visitante',{alerta:{nivel:'bloqueado',motivo:'Medida protetiva: não pode buscar a aluna Lorena Teixeira.'}});
+  db.plantao={inicio:ultimaTroca(now-7*D),resp:'',demo:true};db.config.demoAte=now-7*D;demoFill();
+  [[5,'Portão da quadra travando ao fechar. Manutenção avisada.'],[4,'Lâmpada queimada no corredor B.'],[0,'Câmera 3 (pátio) sem imagem desde as 07:00.']].forEach(([k,txt])=>{const t=dia0(now-k*D)+ri(8*60,11*60)*M;if(t<now)db.log.push({id:uid(),t,k:'oc',txt:'Ocorrência',det:txt})});
+  {const bl=db.pessoas.find(x=>x.alerta&&x.alerta.nivel==='bloqueado');if(bl)db.log.push({id:uid(),t:now-2*D-3*H,k:'bloq',txt:'Tentativa de entrada de pessoa bloqueada',det:nm(bl)+' · não liberado'})}
+  /* agenda da portaria e da secretaria */
+  const hj=hojeISO(),am=isoDia(new Date(now+D));
+  db.agenda.push({id:uid(),tipo:'retirada',nome:RESP[2].nome,com:'',cpf:RESP[2].cpf,aluno:RESP[2].alunos[0].nome,ini:hj,fim:'',hora:'11:30',destino:'',obs:'Consulta médica.',chegadas:[],por:U['Juliana Costa'].nome,criadoEm:now-H});
+  db.agenda.push({id:uid(),tipo:'prestador',nome:PRE[1].nome,com:'',cpf:PRE[1].cpf,aluno:'',ini:hj,fim:'',hora:'14:00',destino:'Manutenção/Cozinha',obs:'Manutenção do ar-condicionado da secretaria.',chegadas:[],por:U['Sérgio Martins'].nome,criadoEm:now-2*H});
+  db.agenda.push({id:uid(),tipo:'visita',nome:'Inspetor da Vigilância Sanitária',com:'',cpf:'',aluno:'',ini:am,fim:'',hora:'09:00',destino:'Manutenção/Cozinha',obs:'Vistoria da cozinha.',chegadas:[],por:U['Sérgio Martins'].nome,criadoEm:now-3*H});
+  const jc=U['Juliana Costa'];
+  [['reuniao_int','Reunião de planejamento da secretaria',hj,'14:00','15:00','setor'],['tarefa','Enviar lista de matrículas para a diretoria',am,'','','setor'],['lembrete','Conferir documentos de transferência',hj,'10:00','','eu']].forEach(([tipo,titulo,data,hora,fim,vis])=>db.compromissos.push({id:uid(),tipo,titulo,data,hora,fim,repetir:'',ate:'',vis,bloq:tipo==='reuniao_int',local:'',obs:'',feitos:{},dono:jc.id,donoNome:jc.nome,setor:'Secretaria',criadoEm:now-D}));
+  [['Ligar para a mãe do Theo sobre a transferência','setor',true],['Pedir toner novo para a impressora','setor',false],['Separar boletins do 9º A','eu',false]].forEach(([txt,vis,fix])=>db.notas.push({id:uid(),txt,vis,setor:'Secretaria',dono:jc.id,donoNome:jc.nome,t:now-ri(1,20)*H,fix,feito:false}));
+  /* chat */
+  const gP={id:uid(),nome:'Portaria',membros:['Ricardo Almeida','Paulo Henrique Santos','Marcelo Oliveira','Fábio Rocha','Sérgio Martins'].map(n=>U[n].id),criador:U['Sérgio Martins'].id,t:now-5*D};
+  const gC={id:uid(),nome:'Cozinha',membros:['Aparecida Ferreira','Lúcia Mendes','Sérgio Martins'].map(n=>U[n].id),criador:U['Sérgio Martins'].id,t:now-5*D};db.chat.grupos.push(gP,gC);
+  const msg=(c,nome,txt,t)=>{if(t<now)db.chat.msgs.push({id:uid(),c,de:U[nome].id,deNome:nome,txt,t})};const t0=dia0(now);
+  msg('geral','Sérgio Martins','Bom dia, equipe! Amanhã às 9h a Vigilância Sanitária vem vistoriar a cozinha.',t0-D+8*H);msg('geral','Aparecida Ferreira','Ok, ciente. Vamos deixar tudo em ordem.',t0-D+8*H+12*M);msg('geral','Juliana Costa','Lembrando: reunião da secretaria hoje às 14h.',t0+7*H+40*M);
+  msg('geral',vig(t0+9*H).nome,'A merenda chegou. Alguém da cozinha pode receber?',t0+9*H+5*M);msg('geral','Lúcia Mendes','Já vou.',t0+9*H+7*M);
+  msg('g:'+gP.id,'Sérgio Martins','Pessoal, a câmera 3 está sem imagem. Já chamei o técnico.',t0+7*H+30*M);msg('g:'+gP.id,vig(t0+8*H).nome,'Ok, ciente. Reforço a ronda no pátio.',t0+7*H+35*M);
+  msg('g:'+gC.id,'Aparecida Ferreira','O leite acaba em 2 dias, precisa pedir.',t0-D+13*H);msg('g:'+gC.id,'Sérgio Martins','Vou fazer a cotação hoje.',t0-D+13*H+20*M);
+  const pv=convPriv(U['Sérgio Martins'].id,jc.id);msg(pv,'Juliana Costa','Sérgio, a impressora está sem toner. Pode incluir na próxima compra?',t0+8*H+10*M);
+  Object.values(U).forEach(u=>{db.chatLido[u.id]={geral:t0-D+9*H,['g:'+gP.id]:t0,['g:'+gC.id]:t0-D+12*H}});
+  /* Central do Gestor */
+  const g=gPatch(),dm=new Date(now).getDate(),fr=Math.min(1,dm/30),dd=f=>{const d=new Date(now);d.setDate(Math.max(1,Math.round(dm*f)));d.setHours(10,0,0,0);return Math.min(d.getTime(),now-H)};
+  if(!g.setores.length)g.setores=[['Merenda',18000],['Limpeza',4500],['Manutenção',6000],['Secretaria e material',1800],['Portaria e segurança',1200]].map(([nome,valor])=>({id:uid(),nome,valor}));
+  const comp=(item,setor,qtd,un,cot,esc_,status,cf,prevD)=>{const c={id:uid(),item,setor,qtd,un,cotacoes:cot.map(([forn,valor])=>({forn,valor})),esc:esc_,status,criado:dd(cf),prev:prevD===undefined?'':isoDia(new Date(now+prevD*D))};if(status==='recebido'){c.recebido=c.criado+2*D>now?now-H:c.criado+2*D;g.gastos.push({id:uid(),t:c.recebido,desc:item,setor,valor:cot[esc_][1],forn:cot[esc_][0],compra:c.id})}g.compras.push(c)};
+  comp('Arroz tipo 1','Merenda','300','kg',[['Atacadão',1240],['Assaí',1180],['Mercado Bom Preço',1395]],1,'recebido',.2);
+  comp('Feijão carioca','Merenda','60','kg',[['Assaí',560],['Atacadão',495],['Distribuidora Merenda Boa',530]],1,'recebido',.35);
+  comp('Gás de cozinha P45','Merenda','2','un',[['Gás Vale',780],['Ultragaz',760]],1,'recebido',.5);
+  comp('Detergente e desinfetante','Limpeza','10','cx',[['Limpa Tudo',640],['Higiclean',598],['Atacadão',712]],1,'pedido',.7,2);
+  comp('Papel A4','Secretaria e material','10','cx',[['Kalunga',1150],['Papelaria Central',1090]],1,'pedido',.6,-1);
+  comp('Lâmpadas LED 20W','Manutenção','50','un',[['Elétrica Paraíba',890],['Leroy Merlin',815]],1,'aprovar',.9);
+  comp('Leite integral','Merenda','400','L',[['Laticínios Vale',1960],['Atacadão',1820],['Assaí',1890]],1,'aprovar',.95);
+  [['Hortifrúti da semana','Merenda',2350*fr*2,'Ceasa SJC',.3],['Carnes e frango','Merenda',3980*fr*1.6,'Frigorífico Vale',.45],['Conserto do portão da quadra','Manutenção',1850,'Serralheria Silva',.6],['Troca de fiação da sala 12','Manutenção',1320,'Elétrica Paraíba',.4],['Produtos de limpeza (reposição)','Limpeza',1240*fr*1.5,'Higiclean',.25],['Pilhas e lanternas','Portaria e segurança',180,'Kalunga',.5],['Material de escritório','Secretaria e material',420,'Papelaria Central',.3]].forEach(([desc,setor,valor,forn,f])=>g.gastos.push({id:uid(),t:dd(f),desc,setor,valor:Math.round(valor),forn}));
+  if(!g.estoque.length)g.estoque=[['Arroz','Merenda','kg',85,40,18,4.1],['Feijão','Merenda','kg',55,20,8,8.3],['Leite','Merenda','L',30,30,15,4.6],['Óleo de soja','Merenda','L',32,10,2.5,7.9],['Macarrão','Merenda','kg',48,15,6,5.2],['Papel higiênico','Limpeza','rolo',170,100,25,1.1],['Detergente','Limpeza','L',12,10,1.5,3.9],['Desinfetante','Limpeza','L',20,8,1,6.5],['Papel A4','Secretaria e material','resma',6,10,1.2,25],['Toner da impressora','Secretaria e material','un',0,1,0.1,180]].map(([nome,setor,un,qtd,min,consumo,preco])=>({id:uid(),nome,setor,un,qtd,min,consumo,preco}));
+  if(!g.chamados.length)g.chamados=[['Torneira vazando no banheiro masculino','Banheiro 2º andar','Hidráulica','aberto',1],['Lâmpada queimada no corredor B','Corredor B','Elétrica','andamento',4],['Portão da quadra travando','Quadra','Estrutura','aberto',5],['Ar-condicionado da secretaria não gela','Secretaria','Elétrica','andamento',2],['Câmera 3 sem imagem','Pátio','Segurança','aberto',0],['Vazamento no telhado da cozinha','Cozinha','Estrutura','resolvido',9],['Tomada solta na sala 12','Sala 12','Elétrica','resolvido',6]].map(([titulo,local,tipo,status,dias])=>({id:uid(),titulo,local,tipo,status,t:now-dias*D-2*H,fim:status==='resolvido'?now-(dias-2)*D:null,por:'Sérgio Martins'}));
+  if(!g.venc.length)g.venc=[['Laudo do elevador',5],['Dedetização',10],['Recarga dos extintores',26],['Limpeza da caixa d’água',48],['Contrato da empresa de limpeza',75],['AVCB (Corpo de Bombeiros)',160]].map(([nome,d])=>({id:uid(),nome,data:isoDia(new Date(now+d*D))}));
+  g.cards=g.cards&&g.cards.length?g.cards:GPAD.map(t=>({id:uid(),tipo:t,titulo:GCAT[t][0]}));
+  db.config.demo1=Date.now();audit('Dados de demonstração criados','Escola simulada com equipe, entradas, plantões, chat e Central do Gestor');
+  return true}
+try{if(demoSeed())save()}catch(e){console.warn('demo',e)}
+function demoFill(){
+  if(!db.config.demo1&&!db.config.demoAte)return false;const now=Date.now(),D=864e5,H=36e5,M=6e4,desde=db.config.demoAte||now;if(now-desde<10*M)return false;
+  const dia0=t=>{const d=new Date(t);d.setHours(0,0,0,0);return d.getTime()};
+  const U=n=>(db.usuarios||[]).find(u=>u.nome===n)||{nome:n};
+  const vig=t=>{const d=new Date(t),h=d.getHours(),idx=Math.round(dia0(t-(h<6?D:0))/D);return h>=6&&h<18?(idx%2?U('Paulo Henrique Santos'):U('Ricardo Almeida')):(idx%2?U('Fábio Rocha'):U('Marcelo Oliveira'))};
+  const tipo_=t=>db.pessoas.filter(p=>p.tipo===t&&!p.alerta);const RESP=tipo_('responsavel'),VIS=tipo_('visitante'),PRE=tipo_('prestador');const FUN=db.funcionarios;
+  if(!RESP.length||!VIS.length||!PRE.length)return false;
+  /* fecha saídas previstas que já passaram */
+  db.visitas.forEach(v=>{if(!v.saida&&v.prevSai&&v.prevSai<=now)v.saida=v.prevSai});db.movChaves.forEach(m=>{if(!m.devolucao&&m.prevDev&&m.prevDev<=now)m.devolucao=m.prevDev});
+  for(let d0=dia0(desde);d0<=now;d0+=D){let sd=Math.round(d0/D)*7919%2147483647||1;const rnd=()=>{sd=(sd*48271)%2147483647;return sd/2147483647};const ri=(a,b)=>a+Math.floor(rnd()*(b-a+1));const pick=a=>a[Math.floor(rnd()*a.length)];
+    const wd=new Date(d0).getDay(),util=wd>0&&wd<6;const n=util?ri(14,22):ri(1,3);
+    for(let j=0;j<n;j++){const tipo=util?(rnd()<.5?'responsavel':rnd()<.6?'visitante':'prestador'):'prestador';const ent=d0+ri(7*60,17*60+15)*M;
+      let pp,setor='',motivo='',aluno='',durM;if(tipo==='responsavel'){pp=pick(RESP);if(rnd()<.6&&(pp.alunos||[]).length){motivo='Buscar aluno';aluno=pp.alunos[0].nome;durM=ri(4,20)}else{setor='Secretaria';durM=ri(10,45)}}
+      else if(tipo==='visitante'){pp=pick(VIS);setor=pick(['Secretaria','Secretaria','Coordenação/Direção']);durM=ri(15,80)}else{pp=pick(PRE);setor='Manutenção/Cozinha';durM=ri(40,200)}
+      if(ent<=desde||ent>now-3*M)continue;const sai=ent+durM*M;db.visitas.push({id:uid(),pid:pp.id,entrada:ent,saida:sai<now?sai:null,prevSai:sai,setor,motivo,aluno,placa:pp.placa||'',obs:'',por:vig(ent).nome,demo:1})}
+    if(util&&FUN.length&&db.chaves.length)for(let j=0,m=ri(2,4);j<m;j++){const kk=pick(db.chaves),f=pick(FUN),ret=d0+ri(7*60,15*60)*M,dev=ret+ri(40,300)*M;if(ret<=desde||ret>now-5*M)continue;
+      db.movChaves.push({id:uid(),chaveId:kk.id,funcId:f.id,nomeChave:kk.nome,nomeFunc:f.nome,retirada:ret,devolucao:dev<now?dev:null,prevDev:dev,obs:'',por:vig(ret).nome})}
+    if(util&&rnd()<.35){const t=d0+ri(8*60,16*60)*M;if(t>desde&&t<now)db.log.push({id:uid(),t,k:'oc',txt:'Ocorrência',det:pick(['Portão de entrada emperrando, manutenção avisada.','Aluno passou mal, responsável chamado.','Entrega chegou fora do horário combinado.','Visitante sem documento, entrada não liberada.','Lâmpada queimada no pátio.'])})}
+    const g=gPatch(),iso=isoDia(new Date(d0));if(util&&!g.merenda.some(x=>x.dia===iso)&&(d0+13*H)<=now&&(d0+13*H)>desde){const r=ri(820,960);g.merenda.push({dia:iso,refeicoes:r,sobra:+(ri(150,350)/10).toFixed(1),custo:Math.round(r*(3.9+rnd()*.5))})}}
+  /* plantões: avança sozinho enquanto ninguém de verdade assumir o posto */
+  if(db.plantao&&db.plantao.demo&&!db.plantao.passagem){const carga=cargaLista();let a=db.plantao.inicio,n_=0;
+    while(n_<60){const b=proximaTroca(a+M);if(b>now)break;const sai=vig(a),ent=vig(b);const prest=db.visitas.filter(v=>v.entrada<b&&(!v.saida||v.saida>b)&&(pessoa(v.pid)||{}).tipo==='prestador').length,hD=new Date(b).getHours()>=17;
+      const cont={prest,secretaria:hD?1+(n_%3):0,agentes:hD?n_%2:0,professores:hD?n_%4:0},falta=(Math.round(a/H)%9===0);
+      const r={id:uid(),inicio:a,fim:b,resp:sai.nome,obs:falta?'Maca emprestada para a enfermaria, volta amanhã.':'',por:sai.nome,res:{entradas:db.visitas.filter(v=>v.entrada>=a&&v.entrada<b).length,kmov:db.movChaves.filter(m=>m.retirada>=a&&m.retirada<b).length,oc:ocorrencias(a,b).length},eventos:[],
+        carga:carga.map(c=>({qtd:c.qtd,nome:c.nome,ok:!(falta&&/maca/i.test(c.nome))})),cont,para:ent.nome,chaves:db.chaves.map(k=>({nome:k.nome,fora:false,com:'',desde:0})),assumo:{nome:ent.nome,t:b+6*M,obs:'',carga:carga.map(c=>({qtd:c.qtd,nome:c.nome,ok:true})),cont},demo:1};
+      try{r.eventos=eventos(a,b).map(e=>({t:e.t,k:e.k,txt:e.txt,det:e.det,exc:!!e.exc}))}catch(e){}
+      db.plantoes.unshift(r);db.log.push({id:uid(),t:b-M,k:'pl',txt:'Passagem de posto',det:sai.nome+' → '+ent.nome});db.log.push({id:uid(),t:b+6*M,k:'pl',txt:'Plantão assumido',det:ent.nome+' · recebido de '+sai.nome});a=b;n_++}
+    db.plantoes.sort((x,y)=>y.inicio-x.inicio);db.plantao={inicio:a,resp:vig(a).nome,demo:true};db.ultimoResp=vig(a-M).nome}
+  db.config.demoAte=now;return true}
+try{if(demoFill())save()}catch(e){console.warn('demo fill',e)}
+
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
