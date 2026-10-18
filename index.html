@@ -728,6 +728,48 @@ img.av{object-fit:cover;padding:0}
 .ind-h b{min-width:0}
 .ind-v{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .ind-v input{width:90px;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;font:inherit;background:var(--surface);color:var(--fg)}
+
+/* ===== Importar planilhas ===== */
+.imp-btn{justify-self:start}
+.imp-hub{display:grid;gap:8px}
+.imp-hub button{display:flex;gap:12px;align-items:center;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--fg);font:inherit;cursor:pointer;min-height:56px;width:100%}
+.imp-hub button>span{display:grid;gap:2px;min-width:0}.imp-hub button small{color:var(--muted);font-size:.8rem}
+.imp-cols{display:flex;flex-wrap:wrap;gap:6px}
+.imp-cols span{padding:3px 10px;border-radius:999px;background:var(--sunk);font-size:.8rem}
+.imp-cols span.ob{font-weight:700}
+.imp-map{display:grid;gap:10px}
+.imp-map .field{min-width:0}
+.imp-prev{display:grid;gap:8px}
+.imp-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:2px;font-size:.88rem;min-width:0}
+.imp-card div{display:flex;gap:8px;min-width:0}.imp-card div span:first-child{color:var(--muted);flex:none}
+.imp-card div span:last-child{min-width:0;overflow-wrap:anywhere}
+.imp-ok{display:grid;gap:4px;padding:14px;border-radius:12px;background:color-mix(in srgb,#16a34a 12%,var(--surface))}
+.imp-paste{width:100%;min-height:96px;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-size:.85rem;background:var(--surface);color:var(--fg);box-sizing:border-box}
+
+/* ===== Telas que abrem por cima: sem rolagem para os lados e em tela cheia no celular ===== */
+.sheet-panel{overflow-x:hidden;overscroll-behavior:contain;box-sizing:border-box}
+.sheet-panel>*,.sheet-panel .field,.sheet-panel .g-row>*,.sheet-panel .grid2>*,.sheet-panel [style*="display:flex"]>*,.sheet-panel [style*="display:grid"]>*{min-width:0}
+.sheet-panel input,.sheet-panel select,.sheet-panel textarea{max-width:100%;min-width:0;box-sizing:border-box}
+.sheet-panel input[type=date],.sheet-panel input[type=time],.sheet-panel input[type=month],.sheet-panel input[type=datetime-local]{-webkit-appearance:none;appearance:none;width:100%;min-width:0;display:block}
+.sheet-panel input::-webkit-date-and-time-value{text-align:left}
+.sheet-panel img,.sheet-panel svg,.sheet-panel video,.sheet-panel canvas{max-width:100%}
+.sheet-panel table{display:block;max-width:100%;overflow-x:auto}
+.sheet-panel h2,.sheet-panel h3,.sheet-panel p,.sheet-panel li,.sheet-panel b,.sheet-panel strong,.sheet-panel span{overflow-wrap:anywhere}
+.sheet-panel .mono{overflow-wrap:anywhere}
+.sheet-head{position:sticky;top:-18px;z-index:2;background:var(--surface);margin:-18px -4px 0;padding:14px 4px 10px}
+@media (max-width:699px){
+  .sheet{align-items:stretch}
+  .sheet-panel{max-width:none;width:100%;height:100%;max-height:none;border-radius:0;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .sheet-head{top:calc(-18px - env(safe-area-inset-top,0px));margin-top:calc(-18px - env(safe-area-inset-top,0px));padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .g-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .g-row>*:last-child{grid-column:1/-1}
+}
+html,body{overflow-x:hidden;max-width:100%}
+.sheet-panel .btn{white-space:normal;min-width:0;max-width:100%}.sheet-panel .btn>span{min-width:0}
+.seg label{position:relative}
+.nota-bar{flex-wrap:wrap}.nota-bar>*{min-width:0}.notas textarea,.notas input{max-width:100%;min-width:0;box-sizing:border-box}
+.sec-head>*,main.wrap section>*,main.wrap .panel>*{min-width:0}
+.wrap{min-width:0}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -3273,6 +3315,186 @@ function demoExtra5(){if(!db.config.demo1||db.config.demo5)return false;const g=
   if(!db.config.escola||db.config.escola==='Nome da escola')db.config.escola='E.E. Modelo (demonstração)';
   db.config.demo5=now;return true}
 try{if(demoExtra5())save()}catch(e){console.warn('demo5',e)}
+
+/* ===== IMPORTAR PLANILHAS: Excel (.xlsx), CSV ou células coladas, sem internet ===== */
+function impNum(v){if(typeof v==='number')return v;let t=String(v??'').replace(/[R$\s%]/g,'').replace(/[^\d,.\-]/g,'');if(!t)return 0;
+  if(/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)||(t.includes(',')&&(!t.includes('.')||t.lastIndexOf(',')>t.lastIndexOf('.'))))t=t.replace(/\./g,'').replace(',','.');else t=t.replace(/,/g,'');
+  const n=parseFloat(t);return isFinite(n)?n:0}
+function impData(v){if(v==null||v==='')return'';if(typeof v==='number'){if(v>20000&&v<80000){const d=new Date(Date.UTC(1899,11,30)+Math.round(v)*864e5);return d.toISOString().slice(0,10)}return''}
+  const t=String(v).trim();let m=t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  m=t.match(/^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2,4}))?/);if(m){let a=m[3]?+m[3]:new Date().getFullYear();if(a<100)a+=2000;const mm=+m[2],dd=+m[1];if(mm<1||mm>12||dd<1||dd>31)return'';return `${a}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`}
+  if(/^\d{5}$/.test(t))return impData(+t);return''}
+function impHora(v){if(v==null||v==='')return'';if(typeof v==='number'){const f=v%1;const min=Math.round(f*1440);return String(Math.floor(min/60)%24).padStart(2,'0')+':'+String(min%60).padStart(2,'0')}
+  const m=String(v).trim().match(/(\d{1,2})\s*(?:[:h]\s*(\d{2})?)?/i);if(!m)return'';const h=+m[1];if(h>23)return'';return String(h).padStart(2,'0')+':'+(m[2]||'00')}
+function impCPF(v){let d=digits(String(v??''));if(d.length>=8&&d.length<11)d=d.padStart(11,'0');return d.slice(0,11)}
+function impTxt(v){if(v==null)return'';if(typeof v==='number'&&Number.isInteger(v))return String(v);return String(v).replace(/\s+/g,' ').trim()}
+function impEnum(v,mapa,padrao){const t=norm(impTxt(v));if(!t)return padrao;for(const [k,re] of mapa)if(re.test(t))return k;return padrao}
+function impCSV(txt){txt=String(txt).replace(/^﻿/,'');const l1=(txt.split(/\r?\n/).find(l=>l.trim())||'');const cnt=c=>(l1.split(c).length-1);
+  const sep=cnt('\t')>0?'\t':cnt(';')>=cnt(',')&&cnt(';')>0?';':',';const rows=[];let row=[],cel='',q=false;
+  for(let i=0;i<txt.length;i++){const ch=txt[i];if(q){if(ch==='"'){if(txt[i+1]==='"'){cel+='"';i++}else q=false}else cel+=ch}
+    else if(ch==='"'&&!cel)q=true;else if(ch===sep){row.push(cel);cel=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&txt[i+1]==='\n')i++;row.push(cel);rows.push(row);row=[];cel=''}else cel+=ch}
+  if(cel||row.length){row.push(cel);rows.push(row)}return rows}
+function impColIdx(ref){const m=String(ref).match(/^[A-Z]+/);if(!m)return 0;let n=0;for(const c of m[0])n=n*26+(c.charCodeAt(0)-64);return n-1}
+async function impXlsx(buf){const u=new Uint8Array(buf),dv=new DataView(buf);let e=-1;
+  for(let i=u.length-22;i>=Math.max(0,u.length-70000);i--){if(dv.getUint32(i,true)===0x06054b50){e=i;break}}if(e<0)throw new Error('zip');
+  const n=dv.getUint16(e+10,true);let p=dv.getUint32(e+16,true);const files={};const td=new TextDecoder();
+  for(let k=0;k<n;k++){const comp=dv.getUint16(p+10,true),csz=dv.getUint32(p+20,true),nl=dv.getUint16(p+28,true),xl=dv.getUint16(p+30,true),cl=dv.getUint16(p+32,true),off=dv.getUint32(p+42,true);files[td.decode(u.subarray(p+46,p+46+nl))]={comp,csz,off};p+=46+nl+xl+cl}
+  const get=async name=>{const f=files[name];if(!f)return null;const ln=dv.getUint16(f.off+26,true),lx=dv.getUint16(f.off+28,true),ini=f.off+30+ln+lx;const data=u.slice(ini,ini+f.csz);
+    if(f.comp===0)return td.decode(data);const out=await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();return td.decode(out)};
+  const xml=t=>new DOMParser().parseFromString(t,'application/xml');const tags=(d,t)=>[...d.getElementsByTagNameNS('*',t)];
+  let path='xl/worksheets/sheet1.xml';
+  try{const wb=xml(await get('xl/workbook.xml'));const s1=tags(wb,'sheet')[0];const rid=[...s1.attributes].find(a=>a.localName==='id'&&a.prefix).value;
+    const rels=xml(await get('xl/_rels/workbook.xml.rels'));const r=tags(rels,'Relationship').find(x=>x.getAttribute('Id')===rid);if(r){const t=r.getAttribute('Target');path=t.startsWith('/')?t.slice(1):'xl/'+t.replace(/^\.\//,'')}}catch(err){}
+  const ssT=await get('xl/sharedStrings.xml');const ss=ssT?tags(xml(ssT),'si').map(si=>tags(si,'t').map(t=>t.textContent).join('')):[];
+  const shT=await get(path)||await get(Object.keys(files).find(f=>/^xl\/worksheets\/.*\.xml$/.test(f)));if(!shT)throw new Error('sheet');
+  const rows=[];tags(xml(shT),'row').forEach(r=>{const ri=(+r.getAttribute('r')||rows.length+1)-1;const row=[];
+    tags(r,'c').forEach(c=>{const ref=c.getAttribute('r');const col=ref?impColIdx(ref):row.length;const t=c.getAttribute('t');const v=tags(c,'v')[0];let val='';
+      if(t==='s')val=ss[+(v?v.textContent:-1)]??'';else if(t==='inlineStr')val=tags(c,'t').map(x=>x.textContent).join('');else if(t==='b')val=v&&v.textContent==='1'?'Sim':'Não';
+      else if(v){const num=Number(v.textContent);val=(t==='str'||t==='e'||isNaN(num))?v.textContent:num}row[col]=val});rows[ri]=row});
+  return Array.from(rows,r=>Array.from(r||[],x=>x??''))}
+function impLerArquivo(file){return new Promise((ok,er)=>{const r=new FileReader();
+  if(/\.xlsx$/i.test(file.name)){r.onload=()=>{if(typeof DecompressionStream==='function')impXlsx(r.result).then(ok).catch(()=>impSheetJS(r.result).then(ok,er));else impSheetJS(r.result).then(ok,er)};r.readAsArrayBuffer(file)}
+  else if(/\.(xls|ods)$/i.test(file.name)){r.onload=()=>impSheetJS(r.result).then(ok,()=>er(new Error('Esse formato antigo precisa de internet. No Excel, use "Salvar como" e escolha .xlsx ou CSV.')));r.readAsArrayBuffer(file)}
+  else{r.onload=()=>ok(impCSV(r.result));r.onerror=er;r.readAsText(file)}})}
+function impSheetJS(buf){if(!xlsxLib)xlsxLib=carregar('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js').catch(e=>{xlsxLib=null;throw e});
+  return xlsxLib.then(()=>{const wb=window.XLSX.read(new Uint8Array(buf),{type:'array'});return window.XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:''})})}
+
+const IMP_TIPO_PES=[['responsavel',/respons|pai|mae|famil|avo|tio|tia/],['prestador',/prest|terceir|fornec|servic|tecnic|entreg/],['visitante',/visit/]];
+const IMP_TIPO_AG=[['retirada',/retir|buscar|saida/],['prestador',/prest|servic|tecnic|manuten/],['reuniao',/reuni|pais|atend/],['visita',/visit/]];
+const IMP_PERF=[['porteiro',/porteir|vigia|portaria|seguranc/],['secretaria',/secret|administr|escritur/],['cozinha',/cozinh|merend|cozinheir/],['gestor',/gestor|diret|coorden/]];
+const IMP={
+  pessoas:{nome:'Cadastros da portaria',sub:'Pais, visitantes e prestadores',ic:'users',quem:['secretaria','gestor','admin'],col:()=>db.pessoas,
+    campos:[['nome','Nome',/^nome|pessoa|respons|visitante/,'txt',1],['cpf','CPF',/cpf|document|rg/,'cpf'],['tel','Telefone',/tel|celular|fone|whats|contato/,'tel'],['tipo','Tipo',/tipo|categoria|vinculo|perfil/,'tipoPes'],['empresa','Empresa',/empresa|firma/,'txt'],['placa','Placa do carro',/placa|veicul|carro/,'txt'],['aluno','Aluno(s)',/aluno|estudante|filho/,'txt']],
+    achar:o=>(o.cpf&&db.pessoas.find(z=>z.cpf===o.cpf))||db.pessoas.find(z=>norm(z.nome)===norm(o.nome)),
+    novo:o=>({id:uid(),nome:o.nome,cpf:o.cpf,tel:o.tel,tipo:o.tipo,empresa:o.empresa,placa:(o.placa||'').toUpperCase(),alunos:o.aluno?parseAlunos(o.aluno):[],foto:'',alerta:null,origem:'importacao',criadoEm:Date.now()}),
+    atual:(x,o)=>{['nome','cpf','tel','empresa'].forEach(k=>{if(o[k])x[k]=o[k]});if(o.placa)x.placa=o.placa.toUpperCase();if(o.aluno){const n=parseAlunos(o.aluno).filter(a=>!x.alunos.some(b=>norm(b.nome)===norm(a.nome)));x.alunos=x.alunos.concat(n)}}},
+  agenda:{nome:'Agenda',sub:'Visitas, retiradas e reuniões marcadas',ic:'cal',quem:['secretaria','gestor','admin'],col:()=>db.agenda,
+    campos:[['ini','Data',/^data|^dia|quando/,'data',1],['hora','Hora',/hora|horario/,'hora'],['nome','Nome',/^nome|pessoa|visitante|respons|quem/,'txt',1],['tipo','Tipo',/tipo|motivo|categoria/,'tipoAg'],['aluno','Aluno',/aluno|estudante/,'txt'],['destino','Destino / setor',/destino|setor|local|sala/,'txt'],['cpf','CPF',/cpf/,'cpf'],['obs','Observação',/obs|descri|assunto|nota/,'txt']],
+    achar:o=>db.agenda.find(a=>norm(a.nome)===norm(o.nome)&&a.ini===o.ini&&(a.hora||'')===(o.hora||'')),
+    novo:o=>({id:uid(),tipo:o.tipo,nome:o.nome,com:'',cpf:o.cpf,aluno:o.aluno,ini:o.ini,fim:'',hora:o.hora,destino:o.destino,obs:o.obs,chegadas:[],por:quem(),criadoEm:Date.now()}),
+    atual:(x,o)=>{['tipo','aluno','destino','obs','cpf'].forEach(k=>{if(o[k])x[k]=o[k]})}},
+  alunos:{nome:'Lista de alunos',sub:'Nome e turma de cada aluno',ic:'users',quem:['secretaria','gestor','admin'],col:()=>(db.alunos=db.alunos||[]),
+    campos:[['nome','Nome do aluno',/nome|aluno|estudante/,'txt',1],['turma','Turma',/turma|serie|classe|sala|ano/,'txt']],
+    achar:o=>db.alunos.find(a=>norm(a.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,turma:o.turma}),atual:(x,o)=>{if(o.turma)x.turma=o.turma}},
+  chaves:{nome:'Chaves',sub:'Chaves e molhos da escola',ic:'key',quem:['gestor','admin'],col:()=>db.chaves,
+    campos:[['nome','Chave',/chave|nome|descri/,'txt',1],['local','Onde fica',/local|onde|sala|quadro/,'txt'],['obs','Observação',/obs/,'txt']],
+    achar:o=>db.chaves.find(k=>norm(k.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,local:o.local,obs:o.obs}),atual:(x,o)=>{if(o.local)x.local=o.local;if(o.obs)x.obs=o.obs}},
+  equipe:{nome:'Funcionários',sub:'Cria o acesso de cada pessoa da equipe',ic:'users',quem:['admin'],col:()=>db.usuarios,
+    campos:[['nome','Nome',/nome|funcionari|colaborad/,'txt',1],['perfil','Função',/funcao|cargo|perfil|setor/,'perfil'],['tel','Telefone',/tel|celular|fone|whats/,'tel'],['cpf','CPF',/cpf/,'cpf']],
+    achar:o=>(o.cpf&&db.usuarios.find(u=>u.cpf===o.cpf))||db.usuarios.find(u=>norm(u.nome)===norm(o.nome)),
+    novo:o=>({id:uid(),nome:o.nome,login:loginLivre(slugLogin(o.nome)),perfil:o.perfil,setor:'',tel:o.tel,cpf:o.cpf,avatar:'',nomePendente:false,pin:SENHA_PADRAO,trocarSenha:true,ativo:true,criadoEm:Date.now()}),
+    atual:(x,o)=>{if(o.tel)x.tel=o.tel;if(o.cpf)x.cpf=o.cpf}},
+  estoque:{nome:'Estoque',sub:'Itens, quantidades e consumo',ic:'list',quem:['gestor','admin'],g:1,col:()=>G_().estoque,
+    campos:[['nome','Item',/item|produto|nome|descri|material/,'txt',1],['setor','Setor',/setor|categoria|grupo/,'setor'],['un','Unidade',/^un|medida/,'txt'],['qtd','Quantidade em estoque',/quant|qtd|saldo|estoque/,'num'],['min','Estoque mínimo',/minim|min\b/,'num'],['consumo','Consumo por dia',/consumo|gasto.*dia|por dia|media/,'num'],['preco','Preço unitário',/preco|valor|custo/,'num']],
+    achar:o=>G_().estoque.find(x=>norm(x.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,setor:o.setor,un:o.un||'un',qtd:o.qtd,min:o.min,consumo:o.consumo,preco:o.preco}),
+    atual:(x,o,h)=>{['setor','un'].forEach(k=>{if(o[k])x[k]=o[k]});['qtd','min','consumo','preco'].forEach(k=>{if(h[k])x[k]=o[k]})}},
+  forn:{nome:'Fornecedores',sub:'Contatos de quem vende para a escola',ic:'users',quem:['gestor','admin'],g:1,col:()=>G_().forn,
+    campos:[['nome','Fornecedor',/fornec|empresa|nome|razao/,'txt',1],['cat','O que vende',/categ|ramo|produto|vende|tipo/,'txt'],['tel','Telefone',/tel|celular|fone|whats/,'tel'],['email','E-mail',/mail/,'txt'],['obs','Observação',/obs|contato/,'txt']],
+    achar:o=>G_().forn.find(f=>norm(f.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,cat:o.cat,tel:o.tel,email:o.email,obs:o.obs}),atual:(x,o)=>{['cat','tel','email','obs'].forEach(k=>{if(o[k])x[k]=o[k]})}},
+  patrimonio:{nome:'Patrimônio',sub:'Bens com plaqueta, local e estado',ic:'list',quem:['gestor','admin'],g:1,col:()=>G_().patrimonio,
+    campos:[['plaqueta','Plaqueta / número',/plaq|patrim|numero|n[º°o]?\b|codigo|tombo/,'txt'],['nome','Bem',/bem|descri|item|nome|equipament/,'txt',1],['local','Local',/local|sala|setor|onde/,'txt'],['estado','Estado',/estado|situa|condic/,'estado'],['valor','Valor (R$)',/valor|preco|custo/,'num'],['obs','Observação',/obs/,'txt']],
+    achar:o=>G_().patrimonio.find(x=>o.plaqueta?x.plaqueta===o.plaqueta:norm(x.nome+'|'+x.local)===norm(o.nome+'|'+o.local)),
+    novo:o=>({id:uid(),plaqueta:o.plaqueta,nome:o.nome,local:o.local,estado:o.estado,valor:o.valor,obs:o.obs}),atual:(x,o,h)=>{['nome','local','estado','obs'].forEach(k=>{if(o[k])x[k]=o[k]});if(h.valor)x.valor=o.valor}},
+  venc:{nome:'Vencimentos',sub:'Laudos, contratos, extintores',ic:'cal',quem:['gestor','admin'],g:1,col:()=>G_().venc,
+    campos:[['nome','O que vence',/descri|item|nome|document|laudo|contrato/,'txt',1],['data','Data de vencimento',/venc|data|validade|prazo/,'data',1]],
+    achar:o=>G_().venc.find(v=>norm(v.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,data:o.data}),atual:(x,o)=>{x.data=o.data}},
+  chamados:{nome:'Infraestrutura',sub:'Problemas e consertos em aberto',ic:'alert',quem:['gestor','admin'],g:1,col:()=>G_().chamados,
+    campos:[['titulo','Problema',/problema|descri|titulo|servico|ocorr/,'txt',1],['local','Local',/local|sala|onde|setor/,'txt'],['tipo','Tipo',/tipo|categ|area/,'tipoCh'],['status','Situação',/status|situa|andamento/,'statusCh']],
+    achar:o=>G_().chamados.find(c=>norm(c.titulo+'|'+(c.local||''))===norm(o.titulo+'|'+o.local)&&c.status!=='resolvido'),
+    novo:o=>({id:uid(),titulo:o.titulo,local:o.local,tipo:o.tipo,status:o.status,t:Date.now(),por:quem()}),atual:(x,o)=>{if(o.tipo)x.tipo=o.tipo;x.status=o.status}},
+  gastos:{nome:'Gastos',sub:'Histórico de gastos da verba',ic:'chart',quem:['gestor','admin'],g:1,col:()=>G_().gastos,
+    campos:[['data','Data',/^data|^dia|quando/,'data'],['desc','Descrição',/descri|item|gasto|historico|produto/,'txt',1],['setor','Setor',/setor|categ|rubrica|grupo/,'setor'],['valor','Valor (R$)',/valor|total|preco|custo/,'num',1],['forn','Fornecedor',/fornec|empresa|loja/,'txt']],
+    achar:o=>G_().gastos.find(x=>norm(x.desc)===norm(o.desc)&&Math.abs((+x.valor||0)-o.valor)<.005&&isoDia(new Date(x.t))===(o.data||'')),
+    novo:o=>({id:uid(),t:o.data?new Date(o.data+'T12:00:00').getTime():Date.now(),desc:o.desc,setor:o.setor,valor:o.valor,forn:o.forn,importado:true}),atual:()=>{}},
+  setores:{nome:'Verba por setor',sub:'Quanto cada setor pode gastar no mês',ic:'chart',quem:['gestor','admin'],g:1,col:()=>G_().setores,
+    campos:[['nome','Setor',/setor|rubrica|categ|grupo|nome/,'txt',1],['valor','Verba do mês (R$)',/verba|valor|orcament|limite|teto/,'num',1]],
+    achar:o=>G_().setores.find(x=>norm(x.nome)===norm(o.nome)),novo:o=>({id:uid(),nome:o.nome,valor:o.valor}),atual:(x,o)=>{x.valor=o.valor}},
+  listas:{nome:'Outra planilha qualquer',sub:'Vira uma lista própria, com as mesmas colunas',ic:'file',quem:['gestor','admin'],g:1,livre:1,col:()=>G_().listas,campos:[]}
+};
+const IMP_ORD=['pessoas','agenda','alunos','chaves','equipe','estoque','forn','patrimonio','venc','chamados','gastos','setores','listas'];
+const IMP_LBL={'Estoque':'estoque','Fornecedores':'forn','Patrimônio':'patrimonio','Vencimentos':'venc','Infraestrutura':'chamados','Verba':'gastos','Chaves da escola':'chaves','Funcionários':'equipe','Minhas listas':'listas'};
+let IMPST=null;
+function impPode(k){const u=usuarioAtual();const d=IMP[k];if(!u||!d)return false;if(d.g&&typeof G_!=='function')return false;return d.quem.includes(u.perfil)||(u.perfil==='admin')}
+function impConv(tp,v){if(tp==='num')return impNum(v);if(tp==='data')return impData(v);if(tp==='hora')return impHora(v);if(tp==='cpf')return impCPF(v);if(tp==='tel')return digits(impTxt(v)).slice(-11);
+  if(tp==='tipoPes')return impEnum(v,IMP_TIPO_PES,'visitante');if(tp==='tipoAg')return impEnum(v,IMP_TIPO_AG,'visita');if(tp==='perfil')return impEnum(v,IMP_PERF,'porteiro');
+  if(tp==='estado'){const t=norm(impTxt(v));return PAT_EST.find(e=>norm(e)===t)||PAT_EST.find(e=>t&&norm(e).startsWith(t.slice(0,4)))||'Bom'}
+  if(tp==='tipoCh'){const L=['Hidráulica','Elétrica','Estrutura','Limpeza','Segurança','Outros'];const t=norm(impTxt(v));return L.find(e=>t&&(norm(e).startsWith(t.slice(0,5))||t.includes(norm(e).slice(0,5))))||'Outros'}
+  if(tp==='statusCh'){const t=norm(impTxt(v));return /resol|conclu|feito|ok|fechad/.test(t)?'resolvido':/andam|exec|fazendo|aguard/.test(t)?'andamento':'aberto'}
+  if(tp==='setor'){const t=impTxt(v);const ss=(G_().setores||[]);const m=ss.find(x=>norm(x.nome)===norm(t))||ss.find(x=>t&&norm(x.nome).includes(norm(t)))||ss.find(x=>t&&norm(t).includes(norm(x.nome)));return m?m.nome:(t||(ss[0]||{}).nome||'')}
+  return impTxt(v)}
+function impPrepara(k,rows,fonte){const d=IMP[k];rows=(rows||[]).map(r=>(r||[]).map(c=>typeof c==='string'?c.trim():c)).filter(r=>r.some(c=>c!==''&&c!=null));
+  if(!rows.length){toast('Não encontrei dados nessa planilha.');return}
+  let hi=-1,best=0;for(let i=0;i<Math.min(8,rows.length);i++){const h=rows[i].map(c=>norm(impTxt(c)));const cheias=h.filter(Boolean).length;
+    if(d.livre){if(cheias>=2&&h.every(c=>!c||/[a-z]/.test(c))&&cheias>best){hi=i;best=cheias}continue}
+    const sc=d.campos.filter(([,,re])=>h.some(c=>c&&re.test(c))).length+(cheias>=2?.5:0);if(sc>=1&&sc>best){hi=i;best=sc}}
+  if(d.livre&&hi<0&&rows[0].some(c=>/[a-z]/i.test(impTxt(c))))hi=0;
+  const ncol=Math.max(...rows.map(r=>r.length));const head=hi>=0?Array.from({length:ncol},(_,i)=>impTxt(rows[hi][i])||('Coluna '+String.fromCharCode(65+i%26))):Array.from({length:ncol},(_,i)=>'Coluna '+String.fromCharCode(65+i%26));
+  const corpo=rows.slice(hi+1);const map={};const usados=new Set();
+  d.campos.forEach(([c,,re],ix)=>{let j=hi>=0?head.findIndex((h,i)=>!usados.has(i)&&re.test(norm(h))):(ix<ncol?ix:-1);if(j>=0)usados.add(j);map[c]=j});
+  IMPST={k,head,rows:corpo,map,modo:'atualizar',fonte:fonte||'planilha',lnome:(fonte&&fonte!=='células coladas'?fonte:'Planilha importada').replace(/\.[a-z0-9]+$/i,''),res:null};abrirImport(k)}
+function impObjs(){const st=IMPST,d=IMP[st.k];const out=[];let pul=0;
+  st.rows.forEach(r=>{const o={},h={};d.campos.forEach(([c,,,tp])=>{const j=st.map[c];const raw=j>=0?r[j]:'';h[c]=raw!==''&&raw!=null;o[c]=impConv(tp,raw)});
+    if(d.campos.some(([c,,,,ob])=>ob&&!o[c]))pul++;else out.push({o,h})});return {out,pul}}
+function impAplicar(){const st=IMPST;if(!st)return;const d=IMP[st.k];const reg={id:uid(),t:Date.now(),k:st.k,nome:d.nome,arq:st.fonte,novos:[],atual:0,por:quem()};let pul=0,ign=0;const logins=[];
+  if(d.livre){const l={id:uid(),nome:(($('#impLN')||{}).value||st.lnome).trim()||'Planilha importada',cols:st.head,linhas:st.rows.map(r=>({id:uid(),v:st.head.map((_,i)=>impTxt(r[i]))}))};G_().listas.push(l);reg.novos.push(l.id);reg.qtd=l.linhas.length}
+  else{const r=impObjs();pul=r.pul;const col=d.col();r.out.forEach(({o,h})=>{const x=d.achar(o);if(x){if(st.modo==='atualizar'){d.atual(x,o,h);reg.atual++}else ign++}else{const n=d.novo(o);col.push(n);reg.novos.push(n.id);if(st.k==='equipe')logins.push(n.nome+': '+n.login)}})}
+  (db.importacoes=db.importacoes||[]).push(reg);audit('Planilha importada',`${d.nome} · ${reg.novos.length} novos, ${reg.atual} atualizados · ${st.fonte}`);
+  save();st.res={novos:d.livre?reg.qtd:reg.novos.length,atual:reg.atual,pul,ign,logins,regId:reg.id};abrirImport(st.k);try{if(typeof gRedes==='function')gRedes()}catch(e){}}
+function impDesfazer(id){const reg=(db.importacoes||[]).find(r=>r.id===id);if(!reg||reg.desfeito)return;const d=IMP[reg.k];const col=d.col();const ids=new Set(reg.novos);
+  for(let i=col.length-1;i>=0;i--)if(ids.has(col[i].id))col.splice(i,1);reg.desfeito=Date.now();audit('Importação desfeita',`${reg.nome} · ${reg.novos.length} itens retirados`);save();IMPST=null;abrirImport();toast('Importação desfeita. Os itens novos foram retirados.')}
+function impModelo(k){const d=IMP[k];const ex={pessoas:['Maria da Silva','123.456.789-09','(12) 99999-0000','Responsável','','ABC1D23','Ana da Silva (5º A)'],agenda:['25/10/2026','14:00','José Pereira','Reunião','Pedro Pereira','Coordenação',' ','Conversa sobre notas'],
+    alunos:['Ana da Silva','5º A'],chaves:['Chave da secretaria','Quadro da portaria',''],equipe:['João Souza','Porteiro','(12) 99999-0000',''],estoque:['Arroz tipo 1','Merenda','kg','120','40','8','5,49'],forn:['Distribuidora Vale','Limpeza','(12) 3333-0000','vendas@exemplo.com',''],
+    patrimonio:['0001','Projetor','Sala de vídeo','Bom','3200',''],venc:['Laudo do elevador','30/11/2026'],chamados:['Lâmpada queimada','Sala 12','Elétrica','Aberto'],gastos:['05/10/2026','Detergente','Limpeza','236,00','Limpa Tudo'],setores:['Merenda','12000']}[k]||[];
+  csvBaixar('modelo-'+k,d.campos.map(c=>c[1]),[ex])}
+function impHub(){const ks=IMP_ORD.filter(impPode);const hist=(db.importacoes||[]).slice(-6).reverse();
+  return `${head('Importar planilhas')}<p class="note">Traga os dados do sistema que a escola usa hoje. Funciona com <b>Excel (.xlsx)</b>, <b>CSV</b> ou copiando as células da planilha e colando aqui. Não precisa de internet.</p>
+  <div class="imp-hub">${ks.map(k=>`<button data-act="impAbrir" data-id="${k}">${ic(IMP[k].ic)}<span><b>${IMP[k].nome}</b><small>${IMP[k].sub}</small></span></button>`).join('')}</div>
+  ${hist.length?`<div style="display:grid;gap:6px"><p class="eyebrow">Últimas importações</p>${hist.map(r=>`<div class="imp-card"><div><span>${dataBR(r.t)}</span><span><b>${esc(r.nome)}</b> · ${r.k==='listas'?(r.qtd||0)+' linhas':r.novos.length+' novos, '+r.atual+' atualizados'}${r.desfeito?' · desfeita':''}</span></div>${!r.desfeito&&r.novos.length?`<button class="btn ghost sm" data-act="impDesfazer" data-id="${r.id}" style="justify-self:start">${ui.impDel===r.id?'Toque de novo para desfazer':'Desfazer'}</button>`:''}</div>`).join('')}</div>`:''}`}
+function abrirImport(k){if(!k){IMPST=null;abrirSheet(impHub(),'Importar planilhas');return}if(!impPode(k)){toast('Seu perfil não pode importar esses dados.');return}
+  const d=IMP[k],st=IMPST&&IMPST.k===k?IMPST:null;const volta=`<button class="linkbtn" data-act="impAbrir" data-id="" style="justify-self:start">← Todas as importações</button>`;
+  if(st&&st.res){const r=st.res;abrirSheet(`${head('Importar · '+d.nome)}<div class="imp-ok"><b>${ic('check')} Importação concluída</b><span>${r.novos} ${d.livre?'linhas na nova lista':'novos'}${r.atual?`, ${r.atual} atualizados`:''}${r.ign?`, ${r.ign} já existiam e ficaram como estavam`:''}${r.pul?`, ${r.pul} linhas puladas por falta de dados obrigatórios`:''}.</span></div>
+    ${r.logins.length?`<div style="display:grid;gap:6px"><p class="eyebrow">Acessos criados</p><p class="note">Cada pessoa entra com o usuário abaixo e a senha ${SENHA_PADRAO}, e cria a própria senha no primeiro acesso.</p><div class="imp-card">${r.logins.map(l=>`<div><span class="mono">${esc(l)}</span></div>`).join('')}</div></div>`:''}
+    <button class="btn wide" data-act="fechar">${ic('check')}Pronto</button><button class="btn ghost" data-act="impDesfazer" data-id="${r.regId}">${ui.impDel===r.regId?'Toque de novo para desfazer':'Desfazer esta importação'}</button>${volta}`,'Importar planilhas');return}
+  if(!st){abrirSheet(`${head('Importar · '+d.nome)}
+    <p class="note">${d.livre?'Qualquer planilha vira uma lista sua, com as mesmas colunas. Bom para controles que não têm lugar próprio no app.':'Use a planilha que vocês já têm. O app reconhece as colunas pelo título; depois você confere antes de importar.'}</p>
+    ${d.livre?'':`<div style="display:grid;gap:6px"><span class="lbl">Colunas que o app entende</span><div class="imp-cols">${d.campos.map(([,r,,,ob])=>`<span class="${ob?'ob':''}">${r}${ob?' *':''}</span>`).join('')}</div><p class="note">* obrigatória. As outras colunas da planilha são ignoradas.</p></div>`}
+    <label class="btn wide" for="impFile" style="cursor:pointer">${ic('upload')}Escolher planilha (Excel ou CSV)</label><input id="impFile" type="file" accept=".xlsx,.xls,.ods,.csv,.txt" hidden>
+    <details><summary class="linkbtn">Ou cole as células copiadas da planilha</summary><div style="display:grid;gap:8px;margin-top:8px"><textarea id="impCola" class="imp-paste" placeholder="Selecione as células no Excel ou no Google Planilhas, copie e cole aqui"></textarea><button class="btn ghost" data-act="impColar">Usar o que colei</button></div></details>
+    ${d.livre?'':`<button class="btn ghost" data-act="impModelo" data-id="${k}">${ic('copy')}Baixar planilha modelo</button>`}${volta}`,'Importar planilhas');
+    const f=$('#impFile');f.addEventListener('change',e=>{const x=e.target.files[0];if(!x)return;impLerArquivo(x).then(rows=>impPrepara(k,rows,x.name)).catch(err=>toast(err&&err.message&&/formato/.test(err.message)?err.message:'Não consegui ler essa planilha. Tente salvar como CSV.'))});return}
+  const opts=j=>`<option value="-1">— não importar —</option>`+st.head.map((h,i)=>`<option value="${i}"${j===i?' selected':''}>${esc(h)}${st.rows[0]&&impTxt(st.rows[0][i])?' (ex.: '+esc(impTxt(st.rows[0][i]).slice(0,24))+')':''}</option>`).join('');
+  if(d.livre){abrirSheet(`${head('Importar · '+d.nome)}<p class="note"><b>${st.rows.length}</b> linhas e <b>${st.head.length}</b> colunas encontradas em ${esc(st.fonte)}.</p>
+    <div class="field"><label for="impLN">Nome da lista</label><input id="impLN" value="${esc(st.lnome)}"></div><div class="imp-cols">${st.head.map(h=>`<span>${esc(h)}</span>`).join('')}</div>
+    <button class="btn wide" data-act="impOk">${ic('check')}Criar lista com ${st.rows.length} linhas</button><button class="btn ghost" data-act="impOutro">Escolher outro arquivo</button>${volta}`,'Importar planilhas');return}
+  const {out,pul}=impObjs();const nov=out.filter(x=>!d.achar(x.o)).length,ja=out.length-nov;
+  const fmt=(tp,v)=>tp==='data'?(v?dataBR(new Date(v+'T12:00:00').getTime()):''):tp==='num'?(v?String(v).replace('.',','):''):tp==='cpf'&&v?fmtCPF(v):tp==='tel'&&v?maskTel(v):tp==='tipoPes'?TIPOS[v]:tp==='tipoAg'?AGT[v]:tp==='perfil'?PERFIL_NOME[v]:tp==='statusCh'?({aberto:'Aberto',andamento:'Em andamento',resolvido:'Resolvido'})[v]:v;
+  abrirSheet(`${head('Importar · '+d.nome)}<p class="note"><b>${st.rows.length}</b> linhas encontradas em ${esc(st.fonte)}. Confira de qual coluna vem cada informação.</p>
+    <div class="imp-map">${d.campos.map(([c,r,,,ob])=>`<div class="field"><label for="impM_${c}">${r}${ob?' *':''}</label><select id="impM_${c}" data-c="${c}">${opts(st.map[c])}</select></div>`).join('')}</div>
+    <div style="display:grid;gap:6px"><p class="eyebrow">Como vai ficar</p><div class="imp-prev">${out.slice(0,3).map(({o})=>`<div class="imp-card">${d.campos.filter(([c])=>st.map[c]>=0&&o[c]!==''&&o[c]!==0).map(([c,r,,tp])=>`<div><span>${r}:</span><span>${esc(String(fmt(tp,o[c])??''))}</span></div>`).join('')||'<div><span>Nada para mostrar</span></div>'}</div>`).join('')||'<p class="note">Nenhuma linha válida. Confira as colunas acima.</p>'}</div></div>
+    <p class="note">${nov} novos${ja?`, ${ja} já existem no app`:''}${pul?`, ${pul} linhas sem ${d.campos.filter(x=>x[4]).map(x=>x[1].toLowerCase()).join(' ou ')} serão puladas`:''}.</p>
+    ${ja?`<div class="field"><label for="impModo">Quando já existir no app</label><select id="impModo"><option value="atualizar"${st.modo==='atualizar'?' selected':''}>Atualizar com os dados da planilha</option><option value="manter"${st.modo==='manter'?' selected':''}>Manter como está</option></select></div>`:''}
+    <button class="btn wide" data-act="impOk"${out.length?'':' disabled'}>${ic('check')}Importar ${out.length} ${out.length===1?'item':'itens'}</button><button class="btn ghost" data-act="impOutro">Escolher outro arquivo</button>${volta}`,'Importar planilhas');
+  panel.querySelectorAll('.imp-map select').forEach(sl=>sl.addEventListener('change',()=>{st.map[sl.dataset.c]=+sl.value;const top=panel.scrollTop;abrirImport(k);panel.scrollTop=top}));
+  const md=$('#impModo');if(md)md.addEventListener('change',()=>{st.modo=md.value})}
+Object.assign(actions,{
+  impAbrir:k=>{ui.impDel=null;if(!k)IMPST=null;else if(IMPST&&IMPST.k!==k)IMPST=null;abrirImport(k||'')},
+  impColar:()=>{const t=($('#impCola')||{}).value||'';if(!t.trim()){toast('Cole as células primeiro.');return}impPrepara(IMPST?IMPST.k:ui.impK,impCSV(t),'células coladas')},
+  impOk:()=>impAplicar(),
+  impOutro:()=>{const k=IMPST&&IMPST.k;IMPST=null;abrirImport(k)},
+  impModelo:k=>impModelo(k),
+  impDesfazer:id=>{if(ui.impDel!==id){ui.impDel=id;if(IMPST&&IMPST.res)abrirImport(IMPST.k);else abrirImport();return}ui.impDel=null;impDesfazer(id)}
+});
+/* guarda o setor aberto (para colar) e põe o botão "Importar planilha" nas telas de cada setor */
+const _abrirSheetImp=abrirSheet;abrirSheet=function(html,label){_abrirSheetImp(html,label);try{const m=String(html).match(/data-act="impModelo" data-id="([a-z]+)"|Importar · ([^<]+)</);if(m){const nm=m[1]||Object.keys(IMP).find(k=>IMP[k].nome===m[2]);if(nm)ui.impK=nm}
+  const k=IMP_LBL[label];if(k&&impPode(k)&&!panel.querySelector('.imp-btn')&&!panel.querySelector('#ptN,#eN,#fnN')){const h=panel.querySelector('.sheet-head');if(h){h.insertAdjacentHTML('afterend',`<button class="btn ghost sm imp-btn" data-act="impAbrir" data-id="${k}">${ic('upload')}Importar planilha</button>`)}}}catch(e){console.warn('imp',e)}};
+if(typeof FERR!=='undefined')FERR.push(['importar','upload','Importar planilhas',()=>'Do sistema antigo']);
+if(actions.gAbrirTipo){const _gat=actions.gAbrirTipo;actions.gAbrirTipo=t=>{if(t==='importar'){IMPST=null;abrirImport();return}_gat(t)}}
+const _vConfigImp=vConfig;vConfig=function(){const h=_vConfigImp();const u=usuarioAtual();if(!u||!IMP_ORD.some(impPode))return h;
+  return h.replace('<h2 style="font-size:1.35rem">Ajustes</h2>',`$&<div class="panel cfg"><p class="eyebrow">Trazer dados do sistema antigo</p><p class="note">Importe as planilhas que a escola usa hoje: cadastros, agenda, alunos, estoque, fornecedores, patrimônio e mais.</p><div><button class="btn" data-act="impAbrir" data-id="">${ic('upload')}Importar planilhas</button></div></div>`)};
+const _vAgendaImp=vAgenda;vAgenda=function(){const h=_vAgendaImp();if(!impPode('agenda'))return h;return h.replace('<button class="btn ghost" data-act="contasPais">',`<button class="btn ghost" data-act="impAbrir" data-id="">${ic('upload')}Importar planilhas</button>$&`)};
+/* lista de alunos: o Excel agora é lido sem internet */
+importarAlunos=function(file){const fim=ls=>{if(!ls.length){toast('Não encontrei nomes nessa planilha. Confira se tem uma coluna com o nome do aluno.');return}db.alunos=ls;audit('Lista de alunos importada',ls.length+' alunos');save();ui.alQ='';ui.alDel=false;abrirAlunos();toast(ls.length+' alunos importados.')};
+  impLerArquivo(file).then(rows=>fim(linhasParaAlunos(rows))).catch(()=>toast('Não consegui ler essa planilha. Tente salvar como CSV.'))};
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
