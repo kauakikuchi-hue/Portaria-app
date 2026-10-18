@@ -596,6 +596,16 @@ img.av{object-fit:cover;padding:0}
 .chat-in .rap-tg{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--brand);font-size:1.15rem;cursor:pointer}
 .chat-in .rap-tg.on{background:var(--brand-soft);border-color:var(--brand)}
 .chat-conv:has(.chat-rap) .chat-in{border-top:0}
+
+/* ===== Passagem de posto (padrão da equipe) ===== */
+.carga-l{display:grid;gap:6px}
+.cont-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cont{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 12px;background:var(--surface);font-size:.88rem;font-weight:600;min-width:0}
+.cont span{min-width:0}
+.cont input{width:64px;flex:none;min-height:42px;border:1px solid var(--line);border-radius:10px;text-align:center;font-size:1.05rem;background:var(--surface);color:var(--fg)}
+.cont input:focus{border-color:var(--brand);outline:none}
+.as-prev{white-space:pre-wrap;font-size:.8rem;max-height:280px;overflow:auto;margin:0}
+@media (max-width:380px){.cont-g{grid-template-columns:minmax(0,1fr)}}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -850,8 +860,6 @@ function vAssumir(){
   const ctx=r?ctxPlantao(r):null,s=ctx?dadosRel({a:ctx.a,b:ctx.b}):null;
   const dentro=db.visitas.filter(v=>!v.saida),kf=kFora();
   const hora=hhmm(pg.confirmadoEm||pg.criadoEm);
-  const texto=`ASSUMO O POSTO · ${c.escola}\n${me.nome} assume o posto de Porteiro, recebido de ${pg.de}, às ${hora}.`;
-  const wa=ctx?texto+'\n\n'+relTexto(ctx,false):texto;
   const logo=c.logo?`<img class="logo" src="${c.logo}" alt="" style="height:52px;width:auto;max-width:180px;background:none">`:'';
   return `<div class="login"><div class="login-in"><div style="display:flex;gap:12px;align-items:center">${linkSP(logo)}<div class="brand-txt"><strong style="font-size:1.15rem">${esc(c.escola)}</strong><span style="display:block">Portaria digital</span></div></div>
     <h1 style="font-size:1.35rem">Assumir posto</h1>
@@ -860,8 +868,7 @@ function vAssumir(){
     ${dentro.length?`<div><span class="lbl">${dentro.length===1?'1 pessoa ainda está':dentro.length+' pessoas ainda estão'} na escola</span><div class="mini-hist">${dentro.map(v=>`<div><span>${esc(nomeCurto(pessoa(v.pid)||{}))}</span><span class="mono muted">desde ${hhmm(v.entrada)}</span></div>`).join('')}</div></div>`:'<p class="note">Ninguém dentro da escola agora.</p>'}
     ${kf.length?`<div class="alert warn">${ic('key')}<div><strong>${kf.length===1?'1 chave ainda retirada':kf.length+' chaves ainda retiradas'}</strong><p>${kf.map(m=>esc(kNome(m))+' com '+esc(primeiro(fNome(m)))).join(' · ')}</p></div></div>`:''}
     ${r&&r.obs?`<p class="note"><b>Observação de ${esc(pg.de)}:</b> ${esc(r.obs)}</p>`:''}
-    <div class="alert ag">${ic('file')}<div><strong>Relatório de assumir posto</strong><p class="mono" style="white-space:pre-wrap">${esc(texto)}</p></div></div>
-    <a class="btn wa wide" href="https://wa.me/?text=${encodeURIComponent(wa)}" target="_blank" rel="noopener">${ic('chat')}Enviar no WhatsApp</a>
+    ${passagemCamposHTML('as',r?{carga:r.carga,cont:r.cont}:null)}<div class="field"><label for="asObs">Novidades ao assumir (opcional)</label><textarea id="asObs" placeholder="Em branco = sem novidades."></textarea></div><div class="alert ag">${ic('file')}<div style="min-width:0"><strong>Mensagem da passagem de posto</strong><p class="mono as-prev" id="asPrev">${esc(textoAssumo())}</p></div></div><button class="btn wa wide" data-act="assumirWa">${ic('chat')}Enviar no WhatsApp</button>
     <label class="check"><input type="checkbox" id="assumeOk"><span>Confirmo que recebi o posto como está descrito acima.</span></label>
     <span class="err" id="assumeErr" hidden></span>
     <button class="btn wide" data-act="assumirConfirma">${ic('check')}Assumir posto</button>
@@ -882,7 +889,7 @@ function abrirEncerrar(){
     ${kFora().length?`<div class="alert warn">${ic('key')}<div><strong>${kFora().length===1?'1 chave ainda retirada':kFora().length+' chaves ainda retiradas'}</strong><p>${kFora().map(m=>esc(kNome(m))+' com '+esc(primeiro(fNome(m)))).join(' · ')}</p></div></div>`:''}
     ${outros.length?`<div class="field"><label for="encPara">Quem assume o posto</label><select id="encPara">${outros.map(u=>`<option value="${u.id}">${esc(u.nome)}</option>`).join('')}</select></div>`:`<div class="alert warn">${ic('alert')}<div><strong>Não há outro vigia cadastrado</strong><p>Peça ao administrador para criar a conta do próximo vigia em Ajustes.</p></div></div>`}
     ${(()=>{const n=ocorrencias(pl.inicio,agora+1).length;return n?`<p class="note">${n===1?'1 ocorrência registrada':n+' ocorrências registradas'} neste plantão já entram no relatório.</p>`:''})()}
-    <div class="field"><label for="encObs">Observação final (opcional)</label><textarea id="encObs" placeholder="Ex.: portão 2 com defeito, manutenção avisada."></textarea></div>
+    ${passagemCamposHTML('enc')}<div class="field"><label for="encObs">Novidades / observação (opcional)</label><textarea id="encObs" placeholder="Ex.: portão 2 com defeito, manutenção avisada. Em branco = sem novidades."></textarea></div>
     ${outros.length?`<button class="btn wide" data-act="confirmaEnc">${ic('file')}Gerar relatório e passar posto</button>`:''}
     <p class="note">Depois de gerar o relatório, envie pelo WhatsApp e volte para confirmar a passagem.</p>`,'Passar posto');
 }function buscar(q){
@@ -1084,6 +1091,7 @@ function vConfig(){
       <ul class="list">${(c.destinos||[]).map((x,i)=>`<li class="row"><span class="row-txt" style="flex:1"><strong>${esc(x)}</strong></span>${i?`<button class="icon-btn" data-act="destUp" data-id="${i}" aria-label="Subir ${esc(x)}">↑</button>`:''}<button class="icon-btn" data-act="destDel" data-id="${i}" aria-label="Remover ${esc(x)}">${ic('x')}</button></li>`).join('')||'<li><p class="empty">Nenhum destino. O porteiro verá só "Sem destino".</p></li>'}</ul>
       <div style="display:flex;gap:8px;align-items:stretch"><div class="field" style="flex:1"><input id="cDest" placeholder="Novo destino, ex.: Biblioteca" aria-label="Novo destino" enterkeyhint="done"></div><button class="btn" data-act="destAdd">${ic('plus')}Adicionar</button></div>
     </div>
+    <div class="panel cfg"><p class="eyebrow">Materiais de carga do posto</p><p class="note">O porteiro confere estes itens na passagem de posto. Eles saem na mensagem do WhatsApp.</p><ul class="list">${cargaLista().map((x,i)=>`<li class="row"><span class="row-txt" style="flex:1"><strong>${pad2(x.qtd)} ${esc(x.nome)}</strong></span><button class="icon-btn" data-act="cargaDel" data-id="${i}" aria-label="Remover ${esc(x.nome)}">${ic('x')}</button></li>`).join('')||'<li><p class="empty">Nenhum item.</p></li>'}</ul><div style="display:flex;gap:8px;align-items:stretch"><div class="field" style="width:76px;flex:none"><input id="cCargaQ" type="number" inputmode="numeric" min="1" max="99" value="1" aria-label="Quantidade"></div><div class="field" style="flex:1;min-width:0"><input id="cCarga" placeholder="Novo item, ex.: Extintor" aria-label="Novo item"></div><button class="btn" data-act="cargaAdd">${ic('plus')}Adicionar</button></div></div>
     <div class="panel cfg"><p class="eyebrow">Privacidade (LGPD)</p>
       <div class="field"><label for="cRet">Guardar registros por</label><select id="cRet">${['6','12','24'].map(m=>`<option value="${m}"${c.retencao===m?' selected':''}>${m} meses</option>`).join('')}</select></div>
       <p class="note">Depois desse prazo, os registros antigos são apagados automaticamente.</p>
@@ -2209,7 +2217,7 @@ const actions={
   relPlantao:id=>{const r=db.plantoes.find(x=>x.id===id);if(r)abrirRel(ctxPlantao(r))},
   encerrar:()=>abrirEncerrar(),
   passagemConfirma:()=>{const pg=db.plantao.passagem;if(!pg||pg.fase!=='saida')return;pg.fase='aguardando';pg.confirmadoEm=Date.now();logar('pl','Passagem de posto confirmada',pg.de+' → '+pg.paraNome,pg.confirmadoEm);const pa=(db.usuarios||[]).find(u=>u.id===pg.paraId);ui.lgPre=pa?pa.login:'';ui.passMsg=pg.de+' passou o posto para você. Digite sua senha para assumir.';save();sheet.hidden=true;panel.innerHTML='';S=null;saveS();ui.loginSel=null;ui.q='';ui.foco=null;render()},
-  assumirConfirma:()=>{const me=usuarioAtual(),pg=passagemPara(me);if(!pg)return;const ok=$('#assumeOk');if(!ok||!ok.checked){const e=$('#assumeErr');if(e){e.textContent='Marque a confirmação antes de assumir o posto.';e.hidden=false}return}db.plantao.resp=me.nome;db.plantao.passagem=null;logar('pl','Plantão assumido',me.nome+' · recebido de '+pg.de,Date.now());save();ui.tab=PERFIS.porteiro.tabs[0];render();toast('Posto assumido.')},
+  assumirConfirma:()=>{const me=usuarioAtual(),pg=passagemPara(me);if(!pg)return;const ok=$('#assumeOk');if(!ok||!ok.checked){const e=$('#assumeErr');if(e){e.textContent='Marque a confirmação antes de assumir o posto.';e.hidden=false}return}const _r=(db.plantoes||[]).find(x=>x.id===pg.relId);if(_r)_r.assumo=Object.assign({nome:me.nome,t:Date.now(),obs:(($('#asObs')||{}).value||'').trim()},lerCampos('as',_r.carga,_r.cont));db.plantao.resp=me.nome;db.plantao.passagem=null;logar('pl','Plantão assumido',me.nome+' · recebido de '+pg.de,Date.now());save();ui.tab=PERFIS.porteiro.tabs[0];render();toast('Posto assumido.')},
   assumirSair:()=>actions.sair(),
   confirmaEnc:()=>{const fim=Date.now();const pend=panel.querySelector('[name=pend]:checked');const sel=$('#encPara');if(!sel||!sel.value)return;const para=(db.usuarios||[]).find(u=>u.id===sel.value);if(!para)return;const eu=usuarioAtual()||{};const obs=$('#encObs').value.trim();
     if(pend&&pend.value==='saida')db.visitas.forEach(v=>{if(!v.saida){v.saida=fim-1;v.saidaPor=quem()+' (na passagem de posto)'}});
@@ -2217,7 +2225,7 @@ const actions={
     logar('pl','Plantão encerrado',['Responsável: '+eu.nome,obs?'Observação final: '+obs:''].filter(Boolean).join(' · '),fim-1);
     const r={id:uid(),inicio:ini,fim,resp:eu.nome||'',obs,por:quem(),res:{entradas:db.visitas.filter(v=>v.entrada>=ini&&v.entrada<fim).length,kmov:db.movChaves.filter(m=>m.retirada>=ini&&m.retirada<fim).length,oc:ocorrencias(ini,fim).length},eventos:eventos(ini,fim).map(e=>({t:e.t,k:e.k,txt:e.txt,det:e.det,exc:!!e.exc}))};
     logar('pl','Passagem de posto',eu.nome+' → '+para.nome,fim-1);
-    db.plantoes.unshift(r);db.plantao={inicio:fim,resp:null,passagem:{de:eu.nome,deId:eu.id,paraId:para.id,paraNome:para.nome,relId:r.id,fase:'saida',criadoEm:fim}};ui.avisouTroca=false;save();
+    Object.assign(r,lerCampos('enc'),{para:para.nome,chaves:snapChaves()});db.plantoes.unshift(r);db.plantao={inicio:fim,resp:null,passagem:{de:eu.nome,deId:eu.id,paraId:para.id,paraNome:para.nome,relId:r.id,fase:'saida',criadoEm:fim}};ui.avisouTroca=false;save();
     render();abrirRel(ctxPlantao(r));toast('Relatório pronto. Envie pelo WhatsApp e confirme a passagem.')},  pdf:async(id,b)=>{const c=ui.relCtx;if(!c||b.disabled)return;const nomes=$('#rNomes')?$('#rNomes').checked:true;const old=b.innerHTML;b.disabled=true;b.textContent='Gerando PDF…';
     try{const blob=await gerarPDF(c,nomes);const dl=window.claude&&window.claude.use?await window.claude.use('downloads'):null;
       if(!dl){const nome=c.arquivo+'.pdf';
@@ -2393,6 +2401,49 @@ function chatProntas(){const u=usuarioAtual();const k=u?(u.perfil==='admin'?'ges
   document.addEventListener('focusout',()=>setTimeout(upd,120));
   new MutationObserver(()=>{const f=document.querySelector('.chat-conv.full')?'1':'';if(R.dataset.chatfull!==f)R.dataset.chatfull=f}).observe(document.getElementById('app'),{childList:true});
   upd()})();
+
+/* ===== PASSAGEM DE POSTO no padrão usado pela equipe no WhatsApp ===== */
+const CARGA_PAD=[[1,'Notebook / carregador'],[1,'Rádio operador com fone e carregador'],[3,'Fones reservas'],[1,'Celular / carregador'],[2,'Cadeiras de rodas'],[1,'Maca'],[1,'Lanterna']];
+const CONTAGEM=[['prest','🏗️','Prestadores'],['secretaria','🏢','Secretaria'],['agentes','📚','Agentes Escolares'],['professores','👨‍🏫','Professores']];
+const pad2=n=>String(n).padStart(2,'0');
+function cargaLista(){if(!Array.isArray(db.config.carga))db.config.carga=CARGA_PAD.map(([q,n])=>({id:uid(),qtd:q,nome:n}));return db.config.carga}
+function turnoDe(t){const a=ultimaTroca(t),b=proximaTroca(a+60000),h=new Date(a).getHours();
+  const nome=(db.config.turno||'12')==='12'?(h>=5&&h<17?'Diurno':'Noturno'):(h<6?'Madrugada':h<12?'Manhã':h<18?'Tarde':'Noite');return {a,b,nome,txt:`${hhmm(a)} às ${hhmm(b)}`}}
+function snapChaves(){const fora=kFora();return (db.chaves||[]).map(k=>{const m=fora.find(x=>x.chaveId===k.id);return {nome:k.nome,fora:!!m,com:m?nomeCurto({nome:fNome(m)}):'',desde:m?m.retirada:0}})}
+function prestDentro(){return db.visitas.filter(v=>!v.saida&&(pessoa(v.pid)||{}).tipo==='prestador').length}
+function passagemCamposHTML(pre,base){const carga=base&&Array.isArray(base.carga)?base.carga:cargaLista().map(c=>({qtd:c.qtd,nome:c.nome,ok:true}));
+  const cont=Object.assign({secretaria:0,agentes:0,professores:0},base&&base.cont||{},{prest:prestDentro()});
+  return `<div class="field"><span class="lbl">⚠️ Materiais de carga do posto</span><p class="note">Desmarque o que estiver faltando ou com problema e explique em novidades.</p><div class="carga-l">${carga.map((c,i)=>`<label class="check"><input type="checkbox" name="${pre}Carga" data-i="${i}"${c.ok!==false?' checked':''}><span>${pad2(c.qtd)} ${esc(c.nome)}</span></label>`).join('')||'<p class="note">Nenhum item cadastrado em Ajustes.</p>'}</div></div>
+    <div class="field"><span class="lbl">Pessoas na escola agora</span><div class="cont-g">${CONTAGEM.map(([k,e,n])=>`<label class="cont"><span>${e} ${n}</span><input type="number" inputmode="numeric" min="0" max="999" name="${pre}Cont" data-k="${k}" value="${cont[k]||0}"></label>`).join('')}</div><p class="note">Prestadores já vem da portaria. Os outros você conta na hora.</p></div>`}
+function lerCampos(pre,baseCarga,baseCont){const lista=Array.isArray(baseCarga)?baseCarga:cargaLista();
+  const carga=lista.map((c,i)=>{const el=document.querySelector(`input[name="${pre}Carga"][data-i="${i}"]`);return {qtd:c.qtd,nome:c.nome,ok:el?el.checked:c.ok!==false}});
+  const cont=Object.assign({secretaria:0,agentes:0,professores:0},baseCont||{},{prest:prestDentro()});document.querySelectorAll(`input[name="${pre}Cont"]`).forEach(x=>cont[x.dataset.k]=Math.max(0,parseInt(x.value||'0',10)||0));return {carga,cont}}
+function blocoChaves(r,turno){const L=['⚠️ Controle de Chaves ⚠️',`🚨 ${dataBR(r.fim)} 🚨`,`✅ Plantão ${turno.nome} ✅`,''];
+  const ks=Array.isArray(r.chaves)?r.chaves:snapChaves();if(!ks.length)L.push('(nenhuma chave cadastrada no app)');
+  ks.forEach(k=>L.push(k.fora?`❌ ${k.nome} — com ${k.com} desde ${hhmm(k.desde)}`:`✅ ${k.nome}`));return L}
+function blocoPosto(o){const cont=o.cont||{},carga=o.carga||[];
+  const L=[`⚠️ ${db.config.escola} ⚠️`,`🚨 Plantão ${o.turno.nome} ${o.turno.txt}`,'',`✅ Eu ${o.nome} ${o.verbo} o posto QRA ${o.qra} ${o.nov.length?'c/ novidades:':'s/ novidades'}`];
+  o.nov.forEach(x=>L.push('• '+x));
+  L.push('','⚠️ Materiais de carga do posto.','');carga.forEach(c=>L.push(`${c.ok!==false?'✅':'❌'} ${pad2(c.qtd)} ${c.nome}`));
+  L.push('',`🏗️ Prestadores: ${cont.prest||0}`,'',`🏢 Secretaria: pessoas ${pad2(cont.secretaria||0)}`,'',`📚 Agentes Escolares: pessoas ${pad2(cont.agentes||0)}`,`👨‍🏫 Professores: ${pad2(cont.professores||0)}`);return L}
+function turnosDe(r){const out=turnoDe((r.inicio+r.fim)/2);return {out,inn:turnoDe(out.b+60000)}}
+function textoPasso(r,nomes){const tu=turnosDe(r).out;const nov=ocorrencias(r.inicio,r.fim).map(l=>hhmm(l.t)+' – '+l.det);if(r.obs)nov.push(r.obs);
+  const L=[...blocoChaves(r,tu),'',...blocoPosto({verbo:'passo',nome:primeiro(r.resp||r.por||''),qra:primeiro(r.para||''),turno:tu,carga:r.carga,cont:r.cont,nov})];
+  const s=dadosRel({a:r.inicio,b:r.fim});L.push('','📋 Resumo do app: '+s.total+(s.total===1?' entrada':' entradas')+' · '+s.buscas+(s.buscas===1?' aluno buscado':' alunos buscados')+(s.tent.length?' · '+s.tent.length+' tentativa(s) de bloqueado':''));
+  if(s.dentro.length)L.push('👥 Ainda na escola: '+s.dentro.map(v=>nomeCurto(pessoa(v.pid)||{})).join(', '));
+  if(nomes&&s.total){L.push('','📝 Entradas do plantão');s.vs.forEach(v=>{const p=pessoa(v.pid);if(p)L.push(`${hhmm(v.entrada)}${v.saida&&v.saida<=r.fim?'–'+hhmm(v.saida):''} · ${nomeCurto(p)} · ${TIPOS[p.tipo]} · ${destinoTxt(v)}`)})}
+  return L.join('\n')}
+function textoAssumo(){const me=usuarioAtual(),pg=passagemPara(me);if(!pg)return '';const r=(db.plantoes||[]).find(x=>x.id===pg.relId);if(!r)return '';
+  const f=lerCampos('as',r.carga,r.cont),obs=(($('#asObs')||{}).value||'').trim();
+  return textoPasso(r,false)+'\n\n'+blocoPosto({verbo:'assumo',nome:primeiro(me.nome),qra:primeiro(r.resp||pg.de||''),turno:turnosDe(r).inn,carga:f.carga,cont:f.cont,nov:obs?[obs]:[]}).join('\n')}
+const _relTextoBase=relTexto;relTexto=function(c,nomes){return c&&c.tipo==='plantao'&&c.r&&Array.isArray(c.r.carga)?textoPasso(c.r,nomes):_relTextoBase(c,nomes)};
+const _ctxPlantaoBase=ctxPlantao;ctxPlantao=function(r){return Object.assign(_ctxPlantaoBase(r),{r})};
+['input','change'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(!t||!(t.name==='asCarga'||t.name==='asCont'||t.id==='asObs'))return;const pv=$('#asPrev');if(pv)pv.textContent=textoAssumo()}));
+Object.assign(actions,{
+  assumirWa:()=>{const txt=textoAssumo();if(!txt)return;logar('pl','Passagem de posto enviada ao WhatsApp',quem());save();window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank','noopener')},
+  cargaAdd:()=>{const i=$('#cCarga'),q=$('#cCargaQ');const v=(i.value||'').trim();if(!v){i.focus();return}cargaLista().push({id:uid(),qtd:Math.max(1,parseInt(q.value||'1',10)||1),nome:v});save();render();toast('Item adicionado.')},
+  cargaDel:id=>{cargaLista().splice(+id,1);save();render()}
+});
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
