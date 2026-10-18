@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Portaria Digital</title>
 <meta name="theme-color" content="#1C1917">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%231C1917'/%3E%3Cpath d='M7 19V7a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v12M5 19h14M12 13h.01M15 9h3v10' fill='none' stroke='%23F86000' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -577,6 +577,25 @@ img.av{object-fit:cover;padding:0}
 .chat-pessoa:hover{border-color:var(--brand)}
 .chat-pessoa small{display:block;color:var(--muted);font-size:.8rem}
 @media (max-width:420px){.msg{max-width:90%}}
+
+/* ===== Teclado do celular ===== */
+:root[data-kb="1"] .tabs{display:none}
+:root[data-kb="1"] main.wrap{padding-bottom:24px}
+.sheet{inset:auto 0 auto 0;top:var(--vvt,0px);height:var(--vvh,100dvh)}
+/* conversa em tela cheia no celular (como WhatsApp) */
+:root[data-layout="mobile"] .chat-conv.full{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100dvh);z-index:40;border:0;border-radius:0;padding-top:env(safe-area-inset-top,0px)}
+:root[data-layout="mobile"] .chat-conv.full .chat-msgs{flex:1;height:auto;min-height:0}
+.chat-conv.full .chat-in{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+:root[data-kb="1"] .chat-conv.full .chat-in{padding-bottom:10px}
+:root[data-chatfull="1"] body{overflow:hidden}
+/* mensagens prontas */
+.chat-rap{display:flex;gap:8px;overflow-x:auto;padding:8px 12px 0;background:var(--surface);border-top:1px solid var(--line);scrollbar-width:none}
+.chat-rap::-webkit-scrollbar{display:none}
+.rap{flex:none;border:1px solid color-mix(in srgb,var(--brand) 40%,var(--line));background:var(--brand-soft);color:var(--fg);border-radius:999px;padding:8px 14px;font:inherit;font-size:.86rem;font-weight:600;cursor:pointer;min-height:38px;white-space:nowrap}
+.rap:hover{border-color:var(--brand)}
+.chat-in .rap-tg{flex:none;width:46px;height:46px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--brand);font-size:1.15rem;cursor:pointer}
+.chat-in .rap-tg.on{background:var(--brand-soft);border-color:var(--brand)}
+.chat-conv:has(.chat-rap) .chat-in{border-top:0}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -2308,9 +2327,9 @@ function chatMsgsHTML(u,c){const ms=chatMsgsDe(c);if(!ms.length)return `<p class
 function chatConvHTML(u){const c=ui.chatC,conv=chatConvs(u).find(x=>x.id===c);if(!conv)return `<div class="panel"><p class="empty">Escolha uma conversa.</p></div>`;
   const g=conv.g,podeEd=!!(g&&(perfil().gerir||g.criador===u.id));
   const sub=conv.tipo==='geral'?'Toda a equipe · '+equipeChat().length+' pessoas':conv.tipo==='grupo'?(g.membros||[]).map(id=>primeiro((chatPessoa(id)||{}).nome||'')).filter(Boolean).join(', '):'Conversa privada · só vocês dois';
-  return `<section class="panel chat-conv" aria-label="Conversa: ${esc(conv.nome)}"><header class="chat-h">${layoutEf()!=='desktop'?`<button class="icon-btn" data-act="chatVoltar" aria-label="Voltar para as conversas">‹</button>`:''}<div class="chat-ht"><b>${esc(conv.nome)}</b><small>${esc(sub)}</small></div>${podeEd?`<button class="btn ghost sm" data-act="chatGrupo" data-id="${g.id}">Editar grupo</button>`:''}</header>
+  return `<section class="panel chat-conv${layoutEf()!=='desktop'?' full':''}" aria-label="Conversa: ${esc(conv.nome)}"><header class="chat-h">${layoutEf()!=='desktop'?`<button class="icon-btn" data-act="chatVoltar" aria-label="Voltar para as conversas">‹</button>`:''}<div class="chat-ht"><b>${esc(conv.nome)}</b><small>${esc(sub)}</small></div>${podeEd?`<button class="btn ghost sm" data-act="chatGrupo" data-id="${g.id}">Editar grupo</button>`:''}</header>
     <div class="chat-msgs" id="chatMsgs" aria-live="polite">${chatMsgsHTML(u,c)}</div>
-    <div class="chat-in"><textarea id="chatTxt" rows="1" maxlength="2000" placeholder="Escreva uma mensagem" aria-label="Mensagem">${esc((ui.chatRasc||{})[c]||'')}</textarea><button class="btn chat-send" data-act="chatEnviar">Enviar</button></div></section>`}
+    ${ui.chatRap!==false?`<div class="chat-rap" role="group" aria-label="Mensagens prontas">${chatProntas().map(t=>`<button class="rap" data-act="chatPronta" data-id="${esc(t)}">${esc(t)}</button>`).join('')}</div>`:''}<div class="chat-in"><button class="rap-tg${ui.chatRap!==false?' on':''}" data-act="chatRapTg" aria-label="${ui.chatRap!==false?'Esconder':'Mostrar'} mensagens prontas" title="Mensagens prontas">⚡</button><textarea id="chatTxt" rows="1" maxlength="2000" placeholder="Escreva uma mensagem" aria-label="Mensagem">${esc((ui.chatRasc||{})[c]||'')}</textarea><button class="btn chat-send" data-act="chatEnviar">Enviar</button></div></section>`}
 function vChat(){const u=usuarioAtual();if(!u)return '';if(ui.chatC&&!chatPode(u,ui.chatC))ui.chatC=null;
   const topo=`<div class="sec-head" style="margin:0"><div><h2 style="font-size:1.35rem">Chat da equipe</h2><p class="note">Conversas internas da escola. Pais e visitantes não têm acesso.</p></div><div class="chips"><button class="btn out sm" data-act="chatNova">${ic('plus')}Nova conversa</button>${perfil().gerir?`<button class="btn out sm" data-act="chatGrupo" data-id="new">${ic('users')}Novo grupo</button>`:''}</div></div>`;
   if(layoutEf()==='desktop'){if(!ui.chatC)ui.chatC='geral';return `<section class="chat-sec">${topo}<div class="chat-grid"><aside id="chatLista">${chatListaHTML(u)}</aside>${chatConvHTML(u)}</div></section>`}
@@ -2321,7 +2340,7 @@ function chatBadge(){const b=document.querySelector('.tab[data-id="chat"] span')
 function chatAtualizar(forcar){const u=usuarioAtual();if(!u||ui.tab!=='chat')return;const l=$('#chatLista');if(l)l.innerHTML=chatListaHTML(u);const b=$('#chatMsgs');if(b&&ui.chatC){b.innerHTML=chatMsgsHTML(u,ui.chatC);chatRolar(forcar)}chatMarcarLido();chatBadge()}
 function bindChat(){const t=$('#chatTxt');if(!t)return;const ajusta=()=>{t.style.height='auto';t.style.height=Math.min(t.scrollHeight,140)+'px'};ajusta();
   t.addEventListener('input',()=>{(ui.chatRasc=ui.chatRasc||{})[ui.chatC]=t.value;ajusta()});
-  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();actions.chatEnviar()}});
+  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&layoutEf()==='desktop'){e.preventDefault();actions.chatEnviar()}});
   const b=$('#chatMsgs');if(b)b.addEventListener('click',e=>{const m=e.target.closest('.msg.eu');if(!m||e.target.closest('[data-act]'))return;const i=[...b.querySelectorAll('.msg')].indexOf(m),ms=chatMsgsDe(ui.chatC),msg=ms[i];if(!msg||msg.apagada)return;ui.chatSel=ui.chatSel===msg.id?null:msg.id;ui.chatDel=null;const y=b.scrollTop;b.innerHTML=chatMsgsHTML(usuarioAtual(),ui.chatC);b.scrollTop=y});
   chatRolar(true);chatMarcarLido()}
 function abrirChatNova(){const u=usuarioAtual();if(!u)return;const ps=equipeChat().filter(p=>p.id!==u.id);
@@ -2336,8 +2355,9 @@ function abrirChatGrupo(id){const u=usuarioAtual();if(!u)return;const g=id&&id!=
 Object.assign(actions,{
   chatAbrir:id=>{ui.chatC=id;ui.chatSel=null;ui.chatDel=null;render();window.scrollTo(0,0)},
   chatVoltar:()=>{ui.chatC=null;render();window.scrollTo(0,0)},
-  chatEnviar:()=>{const u=usuarioAtual(),t=$('#chatTxt');if(!u||!t||!chatPode(u,ui.chatC))return;const txt=t.value.trim();if(!txt){t.focus();return}const now=Date.now();
-    db.chat.msgs.push({id:uid(),c:ui.chatC,de:u.id,deNome:u.nome,txt:txt.slice(0,2000),t:now});db.chatLido[u.id]=Object.assign({},db.chatLido[u.id],{[ui.chatC]:now});(ui.chatRasc=ui.chatRasc||{})[ui.chatC]='';save();t.value='';t.style.height='auto';chatAtualizar(true);t.focus()},
+  chatEnviar:()=>{const t=$('#chatTxt');if(!t)return;const txt=t.value.trim();if(!txt){t.focus();return}if(chatMandar(txt)){(ui.chatRasc=ui.chatRasc||{})[ui.chatC]='';t.value='';t.style.height='auto';t.focus()}},
+  chatPronta:txt=>{chatMandar(txt)},
+  chatRapTg:()=>{ui.chatRap=ui.chatRap===false;render();const b=$('#chatMsgs');if(b)b.scrollTop=b.scrollHeight},
   chatApagar:id=>{const u=usuarioAtual(),m=db.chat.msgs.find(x=>x.id===id);if(!u||!m||m.de!==u.id)return;if(ui.chatDel!==id){ui.chatDel=id;chatAtualizar();return}
     m.apagada=true;m.txt='';ui.chatDel=null;ui.chatSel=null;audit('Apagou uma mensagem do chat','');save();chatAtualizar();toast('Mensagem apagada.')},
   chatNova:()=>abrirChatNova(),
@@ -2349,6 +2369,30 @@ Object.assign(actions,{
     save();fecharSheet();ui.tab='chat';render();toast('Grupo salvo.')},
   chatGrupoArq:id=>{const g=db.chat.grupos.find(x=>x.id===id);if(!g)return;if(ui.chatArq!==id){ui.chatArq=id;abrirChatGrupo(id);return}g.arquivado=true;ui.chatArq=null;if(ui.chatC==='g:'+id)ui.chatC=null;audit('Arquivou grupo do chat',g.nome);save();fecharSheet();render();toast('Grupo arquivado. As mensagens continuam guardadas.')}
 });
+
+function chatMandar(txt){const u=usuarioAtual();txt=String(txt||'').trim();if(!u||!txt||!chatPode(u,ui.chatC))return false;const now=Date.now();
+  db.chat.msgs.push({id:uid(),c:ui.chatC,de:u.id,deNome:u.nome,txt:txt.slice(0,2000),t:now});db.chatLido[u.id]=Object.assign({},db.chatLido[u.id],{[ui.chatC]:now});save();chatAtualizar(true);return true}
+const PRONTAS={
+  porteiro:['Visitante aguardando na portaria.','Responsável aguardando na portaria para buscar aluno.','Entrega chegou na portaria.','A merenda chegou. Alguém da cozinha pode receber?','Prestador de serviço chegou.','Preciso de apoio na portaria.','Fazendo a ronda, volto em 10 minutos.','Portão fechado.'],
+  secretaria:['Pode liberar a entrada, está autorizado.','Não liberar. Peça para aguardar, por favor.','Responsável vai buscar o aluno mais cedo hoje.','Reunião confirmada, pode encaminhar à secretaria.','Estou indo até a portaria.','Favor chamar o aluno na sala.','Documento recebido, obrigado(a).'],
+  gestor:['Reunião da equipe hoje no fim do expediente.','Favor confirmar que recebeu esta mensagem.','Visita de fiscalização hoje. Mantenham tudo em ordem.','Registrem tudo no app, por favor.','Estou a caminho.','Chego em 10 minutos.','Bom trabalho, equipe!'],
+  comum:['Ok, ciente.','Já vou.','Obrigado(a)!']};
+function chatProntas(){const u=usuarioAtual();const k=u?(u.perfil==='admin'?'gestor':u.perfil):'porteiro';return (PRONTAS[k]||PRONTAS.porteiro).concat(PRONTAS.comum)}
+/* Teclado do celular: a tela acompanha a área visível (Android e iPhone) */
+(function(){const R=document.documentElement;let base=0,kb0=false;
+  const campo=el=>!!el&&(el.tagName==='TEXTAREA'||(el.tagName==='INPUT'&&!/^(checkbox|radio|button|submit|file|range|color|date|time)$/i.test(el.type))||el.isContentEditable);
+  function upd(){const vv=window.visualViewport,h=vv?vv.height:window.innerHeight,t=vv?vv.offsetTop:0;
+    R.style.setProperty('--vvh',Math.round(h)+'px');R.style.setProperty('--vvt',Math.round(t)+'px');
+    const foc=campo(document.activeElement);if(!foc||!base)base=Math.max(h,foc?0:h);
+    const kb=foc&&h<base-120;if(kb!==kb0){kb0=kb;R.dataset.kb=kb?'1':'';const b=document.getElementById('chatMsgs');if(b)b.scrollTop=b.scrollHeight}
+    R.dataset.chatfull=document.querySelector('.chat-conv.full')?'1':''}
+  window.__vvUpd=upd;
+  if(window.visualViewport){visualViewport.addEventListener('resize',upd);visualViewport.addEventListener('scroll',upd)}
+  window.addEventListener('resize',upd);window.addEventListener('orientationchange',()=>{base=0;setTimeout(upd,300)});
+  document.addEventListener('focusin',e=>{setTimeout(upd,60);setTimeout(upd,400);const el=e.target;if(campo(el)&&!el.closest('.chat-conv.full'))setTimeout(()=>{if(document.activeElement===el&&R.dataset.kb==='1')el.scrollIntoView({block:'center',behavior:'smooth'})},450)});
+  document.addEventListener('focusout',()=>setTimeout(upd,120));
+  new MutationObserver(()=>{const f=document.querySelector('.chat-conv.full')?'1':'';if(R.dataset.chatfull!==f)R.dataset.chatfull=f}).observe(document.getElementById('app'),{childList:true});
+  upd()})();
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
