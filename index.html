@@ -2422,20 +2422,20 @@ function blocoChaves(r,turno){const L=['⚠️ Controle de Chaves ⚠️',`🚨 
   const ks=Array.isArray(r.chaves)?r.chaves:snapChaves();if(!ks.length)L.push('(nenhuma chave cadastrada no app)');
   ks.forEach(k=>L.push(k.fora?`❌ ${k.nome} — com ${k.com} desde ${hhmm(k.desde)}`:`✅ ${k.nome}`));return L}
 function blocoPosto(o){const cont=o.cont||{},carga=o.carga||[];
-  const L=[`⚠️ ${db.config.escola} ⚠️`,`🚨 Plantão ${o.turno.nome} ${o.turno.txt}`,'',`✅ Eu ${o.nome} ${o.verbo} o posto QRA ${o.qra} ${o.nov.length?'c/ novidades:':'s/ novidades'}`];
+  const L=[`⚠️ ${db.config.escola} ⚠️`,`🚨 ${dataBR(o.data||Date.now())} 🚨`,`🚨 Plantão ${o.turno.nome} ${o.turno.txt}`,'',`✅ Eu ${o.nome} ${o.verbo} o posto QRA ${o.qra} ${o.nov.length?'c/ novidades:':'s/ novidades'}`];
   o.nov.forEach(x=>L.push('• '+x));
   L.push('','⚠️ Materiais de carga do posto.','');carga.forEach(c=>L.push(`${c.ok!==false?'✅':'❌'} ${pad2(c.qtd)} ${c.nome}`));
   L.push('',`🏗️ Prestadores: ${cont.prest||0}`,'',`🏢 Secretaria: pessoas ${pad2(cont.secretaria||0)}`,'',`📚 Agentes Escolares: pessoas ${pad2(cont.agentes||0)}`,`👨‍🏫 Professores: ${pad2(cont.professores||0)}`);return L}
 function turnosDe(r){const out=turnoDe((r.inicio+r.fim)/2);return {out,inn:turnoDe(out.b+60000)}}
 function textoPasso(r,nomes){const tu=turnosDe(r).out;const nov=ocorrencias(r.inicio,r.fim).map(l=>hhmm(l.t)+' – '+l.det);if(r.obs)nov.push(r.obs);
-  const L=[...blocoChaves(r,tu),'',...blocoPosto({verbo:'passo',nome:primeiro(r.resp||r.por||''),qra:primeiro(r.para||''),turno:tu,carga:r.carga,cont:r.cont,nov})];
+  const L=[...blocoChaves(r,tu),'',...blocoPosto({data:r.fim,verbo:'passo',nome:primeiro(r.resp||r.por||''),qra:primeiro(r.para||''),turno:tu,carga:r.carga,cont:r.cont,nov})];
   const s=dadosRel({a:r.inicio,b:r.fim});L.push('','📋 Resumo do app: '+s.total+(s.total===1?' entrada':' entradas')+' · '+s.buscas+(s.buscas===1?' aluno buscado':' alunos buscados')+(s.tent.length?' · '+s.tent.length+' tentativa(s) de bloqueado':''));
   if(s.dentro.length)L.push('👥 Ainda na escola: '+s.dentro.map(v=>nomeCurto(pessoa(v.pid)||{})).join(', '));
   if(nomes&&s.total){L.push('','📝 Entradas do plantão');s.vs.forEach(v=>{const p=pessoa(v.pid);if(p)L.push(`${hhmm(v.entrada)}${v.saida&&v.saida<=r.fim?'–'+hhmm(v.saida):''} · ${nomeCurto(p)} · ${TIPOS[p.tipo]} · ${destinoTxt(v)}`)})}
   return L.join('\n')}
 function textoAssumo(){const me=usuarioAtual(),pg=passagemPara(me);if(!pg)return '';const r=(db.plantoes||[]).find(x=>x.id===pg.relId);if(!r)return '';
   const f=lerCampos('as',r.carga,r.cont),obs=(($('#asObs')||{}).value||'').trim();
-  return blocoPosto({verbo:'assumo',nome:primeiro(me.nome),qra:primeiro(r.resp||pg.de||''),turno:turnosDe(r).inn,carga:f.carga,cont:f.cont,nov:obs?[obs]:[]}).join('\n')}
+  return blocoPosto({data:Date.now(),verbo:'assumo',nome:primeiro(me.nome),qra:primeiro(r.resp||pg.de||''),turno:turnosDe(r).inn,carga:f.carga,cont:f.cont,nov:obs?[obs]:[]}).join('\n')}
 const _relTextoBase=relTexto;relTexto=function(c,nomes){return c&&c.tipo==='plantao'&&c.r&&Array.isArray(c.r.carga)?textoPasso(c.r,nomes):_relTextoBase(c,nomes)};
 const _ctxPlantaoBase=ctxPlantao;ctxPlantao=function(r){return Object.assign(_ctxPlantaoBase(r),{r})};
 ['input','change'].forEach(ev=>document.addEventListener(ev,e=>{const t=e.target;if(!t||!(t.name==='asCarga'||t.name==='asCont'||t.id==='asObs'))return;const pv=$('#asPrev');if(pv)pv.textContent=textoAssumo()}));
