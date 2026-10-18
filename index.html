@@ -671,6 +671,22 @@ img.av{object-fit:cover;padding:0}
 .g-tag.ruim{background:color-mix(in srgb,var(--danger) 15%,var(--surface));color:var(--danger)}
 .g-tag.atn{background:color-mix(in srgb,#f59e0b 18%,var(--surface));color:#B45309}
 @media (max-width:420px){.g-row{grid-template-columns:minmax(0,1fr) 92px}.g-row>*:last-child{grid-column:1/-1}.g-row3{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== Lote 1: caixa de entrada, pedidos, resumo, busca ===== */
+.g-resumo{padding:14px 16px;display:grid;gap:6px;border-left:4px solid var(--brand)}
+.g-resumo b.t{font-family:var(--f-display);font-size:1.05rem}
+.g-resumo ul{margin:0;padding-left:18px;display:grid;gap:3px;font-size:.92rem}
+.g-busca{position:relative}
+.g-busca input{width:100%;min-height:48px;border:1px solid var(--line);border-radius:12px;padding:10px 12px 10px 40px;font:inherit;background:var(--surface);color:var(--fg)}
+.g-busca input:focus{border-color:var(--brand);outline:none}
+.g-busca .ic{position:absolute;left:12px;top:14px;color:var(--muted)}
+.g-res{display:grid;gap:4px;margin-top:8px}
+.g-res button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--fg);font:inherit;cursor:pointer}
+.g-res button small{color:var(--muted);flex:none}
+.cx-it{display:grid;gap:8px;padding:12px;border-bottom:1px solid var(--line)}
+.cx-it:last-child{border-bottom:0}
+.cx-it .a{display:flex;gap:6px;flex-wrap:wrap}
+.eq-sec{display:grid;gap:10px}
 .pd-mark{display:grid;justify-items:center;gap:10px;color:var(--brand);width:auto!important}.pd-mark b{font-size:1.6rem;color:var(--fg);letter-spacing:.01em}
 </style>
 
@@ -688,10 +704,10 @@ const TIPOS={responsavel:'Responsável',visitante:'Visitante',prestador:'Prestad
 const TURNOS={'12':['06:00','18:00'],'8':['06:00','14:00','22:00'],'6':['00:00','06:00','12:00','18:00']};
 const TURNOS_TXT={'12':'A cada 12 horas (06:00 e 18:00)','8':'A cada 8 horas (06:00, 14:00 e 22:00)','6':'A cada 6 horas (00:00, 06:00, 12:00 e 18:00)'};
 const PERFIS={
-  porteiro:{nome:'Porteiro',tabs:['inicio','chaves','historico','chat'],cpf:false,gerir:false},
-  secretaria:{nome:'Secretaria',tabs:['agenda','inicio','chat'],cpf:false,gerir:false,leitura:true,agenda:true},
+  porteiro:{nome:'Porteiro',tabs:['inicio','chaves','historico','equipe','chat'],cpf:false,gerir:false},
+  secretaria:{nome:'Secretaria',tabs:['agenda','inicio','equipe','chat'],cpf:false,gerir:false,leitura:true,agenda:true},
   gestor:{nome:'Gestor',tabs:['gestao','inicio','agenda','historico','chat','config'],cpf:true,gerir:true,agenda:true},
-  cozinha:{nome:'Cozinha',tabs:['chat'],cpf:false,gerir:false,leitura:true},
+  cozinha:{nome:'Cozinha',tabs:['equipe','chat'],cpf:false,gerir:false,leitura:true},
   admin:{nome:'Administrador',tabs:['gestao','inicio','agenda','chaves','historico','chat','config'],cpf:true,gerir:true,agenda:true}
 };
 const LOGO_SP='';
@@ -824,7 +840,7 @@ function render(){
   const P=perfil();if(!P.tabs.includes(ui.tab))ui.tab=P.tabs[0];
   document.documentElement.style.setProperty('--brand',db.config.cor);
   document.documentElement.dataset.layout=layoutEf();
-  const views={gestao:vGestao,chat:vChat,agenda:vAgenda,inicio:vInicio,chaves:vChaves,historico:vRegistros,hoje:vRegistros,relatorios:vRegistros,config:vConfig};
+  const views={equipe:vEquipeTab,gestao:vGestao,chat:vChat,agenda:vAgenda,inicio:vInicio,chaves:vChaves,historico:vRegistros,hoje:vRegistros,relatorios:vRegistros,config:vConfig};
   app.innerHTML=vChrome()+`<main class="wrap">${views[ui.tab]()}</main>`+dlAlunos();
   after();
 }
@@ -833,12 +849,12 @@ const horaBR=()=>new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',h
 function vChrome(){
   const c=db.config,P=perfil();
   const logo=c.logo?`<img class="logo" src="${c.logo}" alt="Logo da escola">`:`<div class="logo ph" aria-hidden="true">LOGO</div>`;
-  const T={gestao:['Central','chart'],chat:['Chat','chat'],inicio:['Portaria','door'],chaves:['Chaves','key'],historico:['Registros','list'],agenda:['Agenda','cal'],hoje:['Hoje','list'],relatorios:['Relatórios','chart'],config:['Ajustes','sliders']};  return `<div class="chrome"><header class="top"><div class="wrap bar">
+  const T={equipe:['Tarefas','check'],gestao:['Central','chart'],chat:['Chat','chat'],inicio:['Portaria','door'],chaves:['Chaves','key'],historico:['Registros','list'],agenda:['Agenda','cal'],hoje:['Hoje','list'],relatorios:['Relatórios','chart'],config:['Ajustes','sliders']};  return `<div class="chrome"><header class="top"><div class="wrap bar">
     <div class="brand">${linkSP(logo)}<div class="brand-txt"><strong>${esc(c.escola)}</strong><span>${esc(perfil().nome)} · ${esc(quem())}</span></div></div>
     <div class="bar-right"><time class="relogio" id="relogio" title="Horário de Brasília"><span>Brasília</span> <b id="relogioHora">${horaBR()}</b></time>${meuSetor()?`<button class="lay-btn" data-act="avisos" aria-label="Avisos do setor" title="Avisos do setor">${ic('bell')}${avisosNovos().length?`<i class="badge">${avisosNovos().length}</i>`:''}</button>`:''}<button class="lay-btn" data-act="layoutMenu" aria-label="Modo de tela" title="Modo de tela">${ic(layoutEf()==='desktop'?'monitor':'phone')}</button><button class="ubtn-top" data-act="contaMenu" aria-label="Conta: ${esc(quem())}">${avatar({nome:quem(),avatar:(usuarioAtual()||{}).avatar})}<span class="ut"><b>${esc(primeiro(quem()))}</b><small>${esc(P.nome)}</small></span></button></div>
   </div></header>
   ${!P.leitura?`<div class="emg-row"><button class="btn ghost emg-btn" data-act="emergencia">${ic('alert')}<span>Modo emergência</span></button></div>`:''}
-  <nav class="tabs" aria-label="Seções"><div class="tabs-in">${P.tabs.map(t=>`<button class="tab${ui.tab===t?' on':''}" data-act="tab" data-id="${t}"${ui.tab===t?' aria-current="page"':''}>${ic(T[t][1])}<span>${t==='inicio'&&P.leitura?'Entradas':T[t][0]}${t==='agenda'&&pendPais()?` <i class="badge">${pendPais()}</i>`:''}${t==='chat'?chatBadgeHTML():''}</span></button>`).join('')}</div></nav></div>`;
+  <nav class="tabs" aria-label="Seções"><div class="tabs-in">${P.tabs.map(t=>`<button class="tab${ui.tab===t?' on':''}" data-act="tab" data-id="${t}"${ui.tab===t?' aria-current="page"':''}>${ic(T[t][1])}<span>${t==='inicio'&&P.leitura?'Entradas':T[t][0]}${t==='agenda'&&pendPais()?` <i class="badge">${pendPais()}</i>`:''}${t==='chat'?chatBadgeHTML():''}${t==='equipe'?eqBadgeHTML():''}${t==='gestao'?gBadgeHTML():''}</span></button>`).join('')}</div></nav></div>`;
 }
 
 /* Modo de tela é escolha de cada aparelho (não vai para a nuvem). No automático: tela de toque pequena = celular; senão, pela largura da janela. */
@@ -2637,7 +2653,7 @@ function gCardHTML(c,i,n){const ed=ui.gEdit;
 function vGestao(){const g=G_(),u=usuarioAtual();const cs=g.cards;
   return `<section style="display:grid;gap:16px"><div class="g-top"><div><h2 style="font-size:1.35rem">Central do Gestor</h2><p class="note">${ui.gEdit?'Mude a ordem, renomeie, retire ou adicione caixas. Fica salvo para você.':'Seu painel de verba, compras, estoque e infraestrutura.'}</p></div>
     <div class="chips">${ui.gEdit?`<button class="btn sm" data-act="gAdd">${ic('plus')}Adicionar caixa</button><button class="btn ghost sm" data-act="gPadrao">${ui.gPadrao?'Toque de novo':'Restaurar padrão'}</button><button class="btn sm" data-act="gEditar">${ic('check')}Pronto</button>`:`<button class="btn out sm" data-act="gEditar">${ic('sliders')}Personalizar</button>`}</div></div>
-    <div class="g-grid">${cs.map((c,i)=>gCardHTML(c,i,cs.length)).join('')||'<p class="empty">Nenhuma caixa. Toque em Personalizar → Adicionar caixa.</p>'}</div></section>`}
+    ${ui.gEdit?'':gResumoHTML()+gBuscaHTML()}<div class="g-grid">${cs.map((c,i)=>gCardHTML(c,i,cs.length)).join('')||'<p class="empty">Nenhuma caixa. Toque em Personalizar → Adicionar caixa.</p>'}</div></section>`}
 /* ---------- telas de detalhe ---------- */
 const gCard=id=>G_().cards.find(c=>c.id===id);
 const setOpts=sel=>G_().setores.map(s=>`<option${s.nome===sel?' selected':''}>${esc(s.nome)}</option>`).join('');
@@ -2817,6 +2833,100 @@ function demoFill(){
   db.config.demoAte=now;return true}
 try{if(demoFill())save()}catch(e){console.warn('demo fill',e)}
 
+
+/* ===== LOTE 1: Caixa de entrada, Pedidos da equipe, Resumo do dia, Busca única ===== */
+GCAT.caixa=['Caixa de entrada','bell'];
+function gMigrar(){const g=G_();if((g.cardsV||1)<2){if(!g.cards.some(c=>c.tipo==='caixa'))g.cards.unshift({id:uid(),tipo:'caixa',titulo:GCAT.caixa[0]});g.cardsV=2}g.pedidos=g.pedidos||[];return g}
+if(GPAD[0]!=='caixa')GPAD.unshift('caixa');
+const _gPatch1=gPatch;gPatch=function(){const g=_gPatch1();g.pedidos=g.pedidos||[];if((g.cardsV||1)<2){if(!g.cards.some(c=>c.tipo==='caixa'))g.cards.unshift({id:uid(),tipo:'caixa',titulo:GCAT.caixa[0]});g.cardsV=2}return g};
+/* ---- pedidos da equipe ---- */
+function setorDoPerfil(u){const g=G_(),ns=g.setores.map(s=>s.nome);const ach=re=>ns.find(n=>re.test(norm(n)));
+  return (u.perfil==='cozinha'?ach(/merenda|cozinha/):u.perfil==='secretaria'?ach(/secret|material/):u.perfil==='porteiro'?ach(/portaria|seguran/):null)||ns[0]||''}
+const PED_ST={novo:['Aguardando o gestor','atn'],aprovado:['Aprovado','ok'],comprado:['Em compra','ok'],recusado:['Recusado','ruim'],entregue:['Entregue','ok']};
+function pedidoStatus(pd){if(pd.status==='comprado'){const c=G_().compras.find(x=>x.id===pd.compraId);if(c&&c.status==='recebido')return 'entregue'}return pd.status}
+function pedidosHTML(u){const ls=G_().pedidos.filter(p=>p.de===u.id).sort((a,b)=>b.t-a.t).slice(0,10);
+  return `<section class="panel cfg eq-sec"><p class="eyebrow">Pedir material</p>
+    <div class="field"><label for="pdItem">O que está faltando?</label><input id="pdItem" placeholder="Ex.: detergente, leite, papel A4"></div>
+    <div class="g-row3"><div class="field"><label for="pdQtd">Quantidade</label><input id="pdQtd" inputmode="decimal" placeholder="Ex.: 10"></div><div class="field"><label for="pdUn">Unidade</label><input id="pdUn" placeholder="un, kg, L, cx"></div><div class="field"><label for="pdUrg">Urgência</label><select id="pdUrg"><option value="">Normal</option><option value="urgente">Urgente</option></select></div></div>
+    <div class="field"><label for="pdObs">Observação (opcional)</label><input id="pdObs" placeholder="Ex.: acaba amanhã"></div>
+    <button class="btn" data-act="pedidoEnviar">${ic('upload')}Enviar pedido ao gestor</button>
+    ${ls.length?`<div class="list">${ls.map(p=>{const st=pedidoStatus(p);return `<div class="g-it"><span class="t"><b>${esc(p.item)}${p.qtd?' · '+esc(p.qtd+' '+(p.un||'')):''}</b><small>${dataBR(p.t)} ${hhmm(p.t)}${p.resp?' · '+esc(p.resp):''}</small></span><span class="g-tag ${PED_ST[st][1]}">${PED_ST[st][0]}</span></div>`}).join('')}</div>`:'<p class="note">Seus pedidos aparecem aqui com a resposta do gestor.</p>'}</section>`}
+/* ---- aba Tarefas da equipe (seções podem ser acrescentadas nos próximos lotes) ---- */
+const EQ_SECOES=[pedidosHTML];
+function vEquipeTab(){const u=usuarioAtual();if(!u)return '';return `<section style="display:grid;gap:16px"><div><h2 style="font-size:1.35rem">Tarefas</h2><p class="note">Pedidos de material, tarefas recebidas e comunicados da gestão.</p></div>${EQ_SECOES.map(f=>f(u)).join('')}</section>`}
+const EQ_BADGE=[];function eqBadgeHTML(){const u=usuarioAtual();if(!u)return '';const n=EQ_BADGE.reduce((a,f)=>a+f(u),0);return n?` <i class="badge">${n}</i>`:''}
+/* ---- caixa de entrada do gestor ---- */
+const CAIXA_EXT=[];
+function caixaItens(){const g=G_(),out=[];
+  g.pedidos.filter(p=>p.status==='novo').forEach(p=>out.push({t:p.t,ic:'upload',tit:`Pedido: ${p.item}${p.qtd?' ('+p.qtd+' '+(p.un||'')+')':''}`,sub:`${p.deNome} · ${p.setor||''}${p.urg?' · URGENTE':''}${p.obs?' · '+p.obs:''}`,urg:!!p.urg,acts:[['pedidoCotar',p.id,'Aprovar e cotar',''],['pedidoRecusar',p.id,'Recusar','ghost']]}));
+  g.compras.filter(c=>c.status==='aprovar').forEach(c=>out.push({t:c.criado,ic:'file',tit:`Aprovar compra: ${c.item}`,sub:`${brl(cotEsc(c).valor)} · ${cotEsc(c).forn}${econCompra(c)?' · economia '+brl(econCompra(c)):''}`,acts:[['gCompraAprovarCx',c.id,'Aprovar','']]}));
+  comprasAtras().forEach(c=>out.push({t:c.criado,ic:'clock',tit:`Entrega atrasada: ${c.item}`,sub:`${cotEsc(c).forn} · era para ${dBR(c.prev)}`,urg:true,acts:[['gCompraReceberCx',c.id,'Chegou','']]}));
+  g.chamados.filter(x=>x.status==='aberto').forEach(x=>out.push({t:x.t,ic:'alert',tit:`Problema: ${x.titulo}`,sub:`${x.local||''} · aberto há ${dur(Date.now()-x.t)}`,urg:Date.now()-x.t>3*864e5,acts:[['gChAvancaCx',x.id,'Iniciar conserto','']]}));
+  const pp=perfil().agenda?pendPais():0;if(pp)out.push({t:Date.now(),ic:'users',tit:`${pp} ${pp===1?'pedido':'pedidos'} dos pais esperando`,sub:'Cadastros e reuniões para aprovar',acts:[['irAba','agenda','Ver na Agenda','']]});
+  g.venc.filter(v=>diasAte(v.data)<=7).forEach(v=>{const d=diasAte(v.data);out.push({t:Date.now(),ic:'cal',tit:`${v.nome}`,sub:d<0?'venceu há '+(-d)+' dias':d===0?'vence hoje':'vence em '+d+' dias',urg:d<=3,acts:[['gAbrirTipo','venc','Ver','ghost']]})});
+  CAIXA_EXT.forEach(f=>f(out));
+  return out.sort((a,b)=>(b.urg?1:0)-(a.urg?1:0)||b.t-a.t)}
+function caixaItemHTML(x){return `<div class="cx-it"><div class="g-it" style="padding:0;border:0"><span class="t"><b>${x.urg?'⚠️ ':''}${esc(x.tit)}</b><small>${esc(x.sub)}</small></span></div><div class="a">${x.acts.map(([a,id,t,cl])=>`<button class="btn sm ${cl}" data-act="${a}" data-id="${esc(id)}">${t}</button>`).join('')}</div></div>`}
+function gBadgeHTML(){const n=caixaItens().length;return n?` <i class="badge">${n}</i>`:''}
+const _gCardBody1=gCardBody;gCardBody=function(c){if(c.tipo==='caixa'){const it=caixaItens();return `<div class="gc-big">${it.length}</div><div class="gc-sub">${it.length?'coisas esperando você':'Nada pendente. Tudo em dia!'}${it.some(x=>x.urg)?' · <b class="ruim">'+it.filter(x=>x.urg).length+' urgente(s)</b>':''}</div><ul class="gc-l">${it.slice(0,4).map(x=>`<li><span>${x.urg?'⚠️ ':''}${esc(x.tit)}</span></li>`).join('')}</ul>`}return _gCardBody1(c)};
+const _gDetalhe1=gDetalhe;gDetalhe=function(tipo,cid){if(tipo==='caixa'){const it=caixaItens();abrirSheet(`${head('Caixa de entrada')}<p class="note">Tudo que espera uma decisão sua. Resolva aqui mesmo.</p><div class="list">${it.map(caixaItemHTML).join('')||'<p class="empty">Nada pendente. Tudo em dia!</p>'}</div>`,'Caixa de entrada');return}return _gDetalhe1(tipo,cid)};
+/* ---- resumo do dia ---- */
+const RESUMO_EXT=[];
+function gResumoLinhas(){const g=G_(),h=hojeISO(),L=[];const ent=g.compras.filter(c=>c.status==='pedido'&&c.prev===h);if(ent.length)L.push(`📦 ${ent.length===1?'Chega hoje':'Chegam hoje'}: ${ent.map(c=>c.item).join(', ')}`);
+  const at=comprasAtras();if(at.length)L.push(`⏰ ${at.length} ${at.length===1?'entrega atrasada':'entregas atrasadas'}`);
+  const vs=g.venc.filter(v=>diasAte(v.data)>=0&&diasAte(v.data)<=7);vs.forEach(v=>L.push(`📅 ${v.nome}: ${diasAte(v.data)===0?'vence hoje':'vence em '+diasAte(v.data)+' dias'}`));
+  const es=g.estoque.filter(e=>estDias(e)<=3);if(es.length)L.push(`🥫 Acabando em até 3 dias: ${es.map(e=>e.nome).join(', ')}`);
+  const cx=caixaItens().length;if(cx)L.push(`📥 ${cx} ${cx===1?'item':'itens'} na caixa de entrada`);
+  RESUMO_EXT.forEach(f=>f(L));const v=gMes();if(v.verba&&v.prev>v.verba)L.push(`💰 No ritmo atual, a verba estoura em ${brl(v.prev-v.verba)}`);return L}
+function gResumoHTML(){const u=usuarioAtual()||{},h=new Date().getHours(),L=gResumoLinhas();
+  return `<div class="panel g-resumo"><b class="t">${h<12?'Bom dia':h<18?'Boa tarde':'Boa noite'}, ${esc(primeiro(u.nome||''))}! ${L.length?'Hoje:':'Nada urgente hoje.'}</b>${L.length?`<ul>${L.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`}
+function gResumoAviso(){const u=usuarioAtual();if(!u||!perfil().gerir)return;const k='portaria-resumo-'+u.id,h=hojeISO();let v='';try{v=localStorage.getItem(k)||''}catch(e){}if(v===h)return;try{localStorage.setItem(k,h)}catch(e){}const n=gResumoLinhas().length;if(n){setTimeout(()=>{toast(`Resumo do dia: ${n} ${n===1?'ponto de atenção':'pontos de atenção'} na Central.`);try{somAviso()}catch(e){}},1200)}}
+/* ---- busca única ---- */
+const BUSCA_FONTES=[
+  q=>db.pessoas.filter(p=>norm(p.nome).includes(q)).slice(0,6).map(p=>({t:p.nome,s:TIPOS[p.tipo]||'Pessoa',a:'usar',id:p.id})),
+  q=>(db.usuarios||[]).filter(u=>norm(u.nome).includes(q)).slice(0,6).map(u=>({t:u.nome,s:'Equipe · '+(PERFIL_NOME[u.perfil]||''),a:'buscaEquipe',id:u.id})),
+  q=>(db.alunos||[]).filter(a=>norm(a.nome).includes(q)).slice(0,6).map(a=>({t:a.nome,s:'Aluno · '+(a.turma||''),a:'',id:''})),
+  q=>G_().compras.filter(c=>norm(c.item).includes(q)).slice(0,6).map(c=>({t:c.item,s:'Compra · '+brl(cotEsc(c).valor),a:'gAbrirTipo',id:'compras'})),
+  q=>G_().estoque.filter(e=>norm(e.nome).includes(q)).slice(0,6).map(e=>({t:e.nome,s:'Estoque · '+(+e.qtd||0)+' '+(e.un||''),a:'gEstItem',id:e.id})),
+  q=>G_().chamados.filter(c=>norm(c.titulo+' '+(c.local||'')).includes(q)).slice(0,6).map(c=>({t:c.titulo,s:'Problema · '+(c.local||''),a:'gAbrirTipo',id:'infra'})),
+  q=>G_().venc.filter(v=>norm(v.nome).includes(q)).map(v=>({t:v.nome,s:'Vencimento · '+dBR(v.data),a:'gAbrirTipo',id:'venc'})),
+  q=>G_().pedidos.filter(p=>norm(p.item).includes(q)).slice(0,6).map(p=>({t:p.item,s:'Pedido de '+primeiro(p.deNome),a:'gAbrirTipo',id:'caixa'})),
+  q=>(db.chaves||[]).filter(k=>norm(k.nome).includes(q)).map(k=>({t:k.nome,s:'Chave',a:'irAba',id:'chaves'}))];
+function gBuscaHTML(){return `<div class="g-busca">${ic('search')}<input id="gBusca" type="search" placeholder="Buscar em tudo: pessoa, item, compra, problema, documento…" value="${esc(ui.gQ||'')}" aria-label="Buscar em tudo" autocomplete="off"><div class="g-res" id="gBuscaRes">${gBuscaRes()}</div></div>`}
+function gBuscaRes(){const q=norm(ui.gQ||'').trim();if(q.length<2)return '';let r=[];BUSCA_FONTES.forEach(f=>{try{r=r.concat(f(q))}catch(e){}});r=r.slice(0,20);
+  return r.length?r.map(x=>`<button${x.a?` data-act="${x.a}" data-id="${esc(x.id)}"`:''}><span>${esc(x.t)}</span><small>${esc(x.s)}</small></button>`).join(''):'<p class="note">Nada encontrado.</p>'}
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='gBusca'){ui.gQ=e.target.value;const r=$('#gBuscaRes');if(r)r.innerHTML=gBuscaRes()}});
+/* ---- ações ---- */
+Object.assign(actions,{
+  pedidoEnviar:()=>{const u=usuarioAtual(),it=($('#pdItem').value||'').trim();if(!u||!it){$('#pdItem').focus();return}
+    G_().pedidos.push({id:uid(),item:it,qtd:($('#pdQtd').value||'').trim(),un:($('#pdUn').value||'').trim(),urg:$('#pdUrg').value==='urgente',obs:($('#pdObs').value||'').trim(),de:u.id,deNome:u.nome,setor:setorDoPerfil(u),t:Date.now(),status:'novo'});save();render();toast('Pedido enviado ao gestor.')},
+  pedidoCotar:id=>{const p=G_().pedidos.find(x=>x.id===id);if(!p)return;ui.pedidoAtual=id;gCompraForm({item:p.item,setor:p.setor,qtd:p.qtd,un:p.un})},
+  pedidoRecusar:id=>{const p=G_().pedidos.find(x=>x.id===id);if(!p)return;abrirSheet(`${head('Recusar pedido')}<p class="note">${esc(p.deNome)} pediu <b>${esc(p.item)}</b>.</p><div class="field"><label for="pdMot">Motivo (a pessoa vai ver)</label><input id="pdMot" placeholder="Ex.: ainda temos no estoque"></div><button class="btn wide" data-act="pedidoRecusarOk" data-id="${id}">Recusar</button>`,'Recusar pedido')},
+  pedidoRecusarOk:id=>{const p=G_().pedidos.find(x=>x.id===id);if(!p)return;p.status='recusado';p.resp=($('#pdMot').value||'').trim()||'Recusado pelo gestor';save();gDetalhe('caixa');gRedes()},
+  gCompraAprovarCx:id=>{actions.gCompraAprovar(id);gDetalhe('caixa')},
+  gCompraReceberCx:id=>{actions.gCompraReceber(id);gDetalhe('caixa')},
+  gChAvancaCx:id=>{actions.gChAvanca(id);gDetalhe('caixa')},
+  gAbrirTipo:t=>{gDetalhe(t)},
+  irAba:t=>{fecharSheet();ui.tab=t;render();window.scrollTo(0,0)},
+  buscaEquipe:id=>{const u=(db.usuarios||[]).find(x=>x.id===id);if(!u)return;if(ehAdmin()){abrirUsr(id);return}toast(u.nome+' · '+(PERFIL_NOME[u.perfil]||'')+(u.tel?' · '+maskTel(u.tel):''))}
+});
+const _gCompraSalvar1=actions.gCompraSalvar;actions.gCompraSalvar=function(){const n0=G_().compras.length;_gCompraSalvar1();const g=G_();if(ui.pedidoAtual&&g.compras.length>n0){const p=g.pedidos.find(x=>x.id===ui.pedidoAtual);if(p){p.status='comprado';p.compraId=g.compras[g.compras.length-1].id;p.resp='Aprovado, em compra';save()}ui.pedidoAtual=null;gRedes()}};
+const _fecharSheet1=fecharSheet;fecharSheet=function(){ui.pedidoAtual=null;return _fecharSheet1()};
+/* aviso sonoro quando chega algo novo na caixa do gestor */
+let _cxUlt=null;setInterval(()=>{const u=usuarioAtual();if(!u||!perfil().gerir||ui.modo==='pais'){_cxUlt=null;return}let n=0;try{n=G_().pedidos.filter(p=>p.status==='novo').length}catch(e){return}if(_cxUlt!==null&&n>_cxUlt){try{somAviso()}catch(e){}toast('Novo pedido da equipe na Caixa de entrada.')}_cxUlt=n},2000);
+/* aviso para quem pediu, quando o gestor responde */
+let _pdUlt=null;setInterval(()=>{const u=usuarioAtual();if(!u||perfil().gerir||ui.modo==='pais'){_pdUlt=null;return}let sig='';try{sig=G_().pedidos.filter(p=>p.de===u.id&&p.status!=='novo').map(p=>p.id+p.status).join()}catch(e){return}if(_pdUlt!==null&&sig!==_pdUlt){try{somAviso()}catch(e){}toast('O gestor respondeu um pedido seu (aba Tarefas).');if(ui.tab==='equipe'&&sheet.hidden&&!(document.activeElement&&/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)))render()}_pdUlt=sig},2500);
+EQ_BADGE.push(u=>0);
+setTimeout(gResumoAviso,1500);
+/* exemplos na escola simulada */
+function demoExtra2(){if(!db.config.demo1||db.config.demo2)return false;const g=G_(),now=Date.now(),H=36e5;const U=n=>(db.usuarios||[]).find(u=>u.nome===n);
+  const pd=(nome,item,qtd,un,urg,obs,status,resp,h)=>{const u=U(nome);if(!u)return;g.pedidos.push({id:uid(),item,qtd,un,urg,obs,de:u.id,deNome:u.nome,setor:setorDoPerfil(u),t:now-h*H,status,resp:resp||''})};
+  pd('Aparecida Ferreira','Leite integral','400','L',true,'Acaba em 2 dias','novo','',3);
+  pd('Juliana Costa','Toner da impressora','2','un',false,'Impressora da secretaria parada','novo','',5);
+  pd('Ricardo Almeida','Pilhas AA para lanterna','8','un',false,'','recusado','Temos pilhas no armário da coordenação',30);
+  pd('Lúcia Mendes','Óleo de soja','20','L',false,'','novo','',1);
+  db.config.demo2=now;return true}
+try{if(demoExtra2())save()}catch(e){console.warn('demo2',e)}
 ui.chatVisto=Date.now();ui.chatSig='';
 setInterval(()=>{if(ui.modo==='pais')return;const u=usuarioAtual();if(!u||!db.chat)return;const ms=db.chat.msgs||[];
   const sig=ms.length+':'+ms.reduce((a,m)=>Math.max(a,m.t),0)+':'+ms.filter(m=>m.apagada).length+':'+JSON.stringify(db.chatLido||{})+':'+(db.chat.grupos||[]).length;
